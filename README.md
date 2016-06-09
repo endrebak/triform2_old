@@ -23,7 +23,7 @@ source("https://bioconductor.org/biocLite.R")
 biocLite()
 ```
 
-Download the package sources for yaml [here].(https://cran.rstudio.com/web/packages/yaml/index.html)
+Download the package sources for yaml [here](https://cran.rstudio.com/web/packages/yaml/index.html).
 
 Then install it using:
 
