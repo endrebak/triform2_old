@@ -1,4 +1,4 @@
-READ.PATH : /Users/labs enter/havpryd/code/triform/inst/extdata/  ## Path to source files (reads in BED format)
+READ.PATH : inst/extdata/  ## Path to source files (reads in BED format)
 COVER.PATH : ./chrcovers  ## Path for chromosome coverage files
 OUTPUT.PATH : ./Triform_output.csv ## Path for output file (including filename)
 
