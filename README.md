@@ -40,3 +40,7 @@ source("triform-Ex.R")
 #### Paper
 
 [The Triform algorithm: improved sensitivity and specificity in ChIP-Seq peak finding](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-13-176)
+
+#### Qs to self:
+
+* Why does not the algorithm store the flanking input?

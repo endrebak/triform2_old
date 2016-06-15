@@ -4,6 +4,9 @@ options(stringsAsFactors=FALSE)
 library(IRanges)
 library(yaml)
 
+load("temp/cvg.RData")
+load("temp/sizes.RData")
+load("temp/chr.RData")
 
 ##' Runs Triform according to configuration file or given parameters.
 ##'
@@ -26,10 +29,7 @@ triform <- function(configPath="./config.yml", params=list()){
     message("Using config file ", configPath)
     config <- yaml.load_file(configPath)
     message("here!")
-    print(seq_along(config))
     for (i in seq_along(config)){
-      print(names(config)[[i]])
-      print(config[[i]])
       assign(names(config)[i], config[[i]], pos=".GlobalEnv")
     }
   }
@@ -37,8 +37,6 @@ triform <- function(configPath="./config.yml", params=list()){
 
   # reads if not config given on the command line
   for (i in seq_along(params)){
-    print(names(config)[[i]])
-    print(config[[i]])
     assign(names(params)[i], params[[i]], pos=".GlobalEnv")
   }
 
@@ -165,23 +163,28 @@ test.chr <- function(chr,
                      min.shift=MIN.SHIFT,
                      min.width=MIN.WIDTH,
                      filePath="./chrcovers") {
-  test.init(chr, filePath)
+  ## test.init(chr, filePath)
+  ## save(CVG, file="temp/cvg.RData")
+  ## save(SIZES, file="temp/sizes.RData")
+  ## save(CHR, file="temp/chr.RData")
 
   PEAKS <<- list()
   PEAK.INFO <<- list()
   CENTER.CVG <<- list()
   N.PEAKS <<- 0
 
+  # target names only [1] "srf_huds_Gm12878" - why the loop?
   for(type in TARGET.NAMES)  {
     PEAKS[[type]] <<- list()
     PEAK.INFO[[type]] <<- list()
     CENTER.CVG[[type]] <<- list()
     is.type <- grepl(type, CVG.NAMES)
 
+    print(DIRECTIONS)
     for(direction in DIRECTIONS){
+      # why three? type 1, type 2, type 3?
       PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
       PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
-
 
       if (any(IS.REP2)){
         ## Use 2 replicates
@@ -385,6 +388,9 @@ test.init <- function(chr, filePath="./chrcovers") {
     # what is c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS)), the below?
     #    -    -    -    +    +    +
     # 8688 8688 8688 8986 8986 8986
+    # each file has chromosome coverage - what does it consists of?
+    # length 100 regions and the regions inbetween them
+    print(chrcovers[[type]])
     SIZES <<- c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS))
 
     ## RleList of length 2
@@ -417,18 +423,23 @@ test.init <- function(chr, filePath="./chrcovers") {
         next                                    # no need for flanking input coverage
       }
 
-      # does the switch select first case if one, second case if two etc?
+      # This decides whether left, centre or right flank
+      # N.
       switch(1 + (i-1)%%N.LOCS,			# LOCATION index
              CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])), # strand-specific coverage on left flank
              CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD), # strand-specific coverage on right flank
              CVG[[n]] <<- cvg     # strand-specific coverage on center
              )
       print(CVG[[1 + (i-1)%%N.LOCS]])
-      stop()
     }
   }
+  # loop over "srf_huds_Gm12878_rep1" etc done
+  # have collected coverage data for each strand
+  # what is it now used for?
+
   names(CVG) <<- CVG.NAMES
   maxlen <- max(sapply(CVG,length))
+  print(CVG)
   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
   names(SIZES) <<- CVG.NAMES
 
@@ -512,11 +523,20 @@ findForms1Replicate <- function(direction, is.type, type,
 
 findForms2Replicates <- function(direction, is.type, type,
                                  min.z, min.width){
+  ## print(direction) # FORWARD or REVERSE
   is.dir <- grepl(direction, CVG.NAMES)
+  ## print(CVG.NAMES)
   ## ref <- (CVG[[CVG.NAMES[IS.CONTROL & is.dir & IS.CENTER & IS.REP1]]] +
   ##         CVG[[CVG.NAMES[IS.CONTROL & is.dir & IS.CENTER & IS.REP2]]])
-  ref <- Reduce("+",CVG[which(IS.CONTROL & is.dir & IS.CENTER)])	# no need for replicate inputs
+  print("CVG[which(IS.CONTROL & is.dir & IS.CENTER)]")
+  print(CVG[which(IS.CONTROL & is.dir & IS.CENTER)])
 
+  ref <- Reduce("+",CVG[which(IS.CONTROL & is.dir & IS.CENTER)])	# no need for replicate inputs
+  # does this ^^ mean they average the inputs?
+  print("ref")
+  print(ref)
+
+  # what does sur stand for?
   surL1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.LEFT & IS.REP1]]]
   surR1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.RIGHT & IS.REP1]]]
   cvg1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.CENTER & IS.REP1]]]
@@ -525,12 +545,15 @@ findForms2Replicates <- function(direction, is.type, type,
   surR2 <- CVG[[CVG.NAMES[is.type & is.dir & IS.RIGHT & IS.REP2]]]
   cvg2 <- CVG[[CVG.NAMES[is.type & is.dir & IS.CENTER & IS.REP2]]]
 
+  # adding the two datasets together
   surL <- surL1 + surL2
   surR <- surR1 + surR2
   cvg <- cvg1 + cvg2
+  # why only storing the center?
   CENTER.CVG[[type]][[direction]] <<- cvg
 
                                         # Form-1 test with consistency check
+  # w
   signs1 <- sign(2*cvg1-surL1-surR1)
   signs2 <- sign(2*cvg2-surL2-surR2)
   ok <- (signs1==1)*(signs2==1)
