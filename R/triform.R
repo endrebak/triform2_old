@@ -180,6 +180,7 @@ test.chr <- function(chr,
     CENTER.CVG[[type]] <<- list()
     is.type <- grepl(type, CVG.NAMES)
 
+    print("DIRECTIONS")
     print(DIRECTIONS)
     for(direction in DIRECTIONS){
       # why three? type 1, type 2, type 3?
@@ -195,17 +196,22 @@ test.chr <- function(chr,
         formsList <- findForms1Replicate(direction, is.type, type,
                                          min.z, min.width)
       }
+
+      # form 1 - 3 peaks
       p1 <- formsList$p1
       p2 <- formsList$p2
       p3 <- formsList$p3
+      # The model-free test statistic for local enrichment, z4(x), is calculated according to (8)
       p4 <- formsList$p4
       ratio <- formsList$ratio
+      # sum of inputs
       ref <- formsList$ref
       zscores.list <- formsList$zscores.list
       cvg <- formsList$cvg
       rm(formsList)
 
 
+      # why intersect p1 and p4; p1 form one peaks, p4 those that are enriched
       p1 <- intersect(p1,p4)
       ok <- (width(p1)>min.width)
       p1 <- p1[ok]
@@ -219,22 +225,54 @@ test.chr <- function(chr,
       p3 <- p3[ok]
 
       peaks.list <- list(p1,p2,p3)
+      # mapply; Apply a Function to Multiple List or Vector Arguments
       zviews.list <- mapply(function(x,y) Views(x,y),
                             x=zscores.list, y=peaks.list)
-      maxz.list <- lapply(zviews.list, viewMaxs)
+      # x =
+      ## numeric-Rle of length 57442693 with 13601 runs
+      ##   Lengths:           2819735                81 ...               197
+      ##   Values :                 0                 2 ...                 0
+      # y =
+      ## IRanges object with 312 ranges and 0 metadata columns:
+      ##             start       end     width
+      ##         <integer> <integer> <integer>
+      ##     [1]   2819736   2819816        81
+      ##     [2]   2834767   2834864        98
+      ##     [3]   2881597   2881690        94
+      # list of
+      ## Views on a 57442693-length Rle subject
 
+      ## views:
+      ##          start      end width
+      ##   [1]  2819736  2819816    81 [2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ...]
+      ##   [2]  2834767  2834864    98 [2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ...]
+      ##   [3]  2881597  2881690    94 [2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ...]
+      ##   [4]  3778332  3778354    23 [2.44949 2.44949 2.44949 2.44949 2.44949 ...]
+      ##   [5]  3779776  3779843    68 [2.449490 2.449490 2.449490 2.449490 ...]
+
+      maxz.list <- lapply(zviews.list, viewMaxs)
+      # [1]  2.000000  2.000000  2.000000  2.449490  2.828427  2.000000  2.000000
+
+      # already in 2 for loops: filenames and directions
       for(i in 1:3) {	# separate analyses of different peak forms
         peaks <- peaks.list[[i]]
-        if(!length(peaks)) next
+        if(!length(peaks)) next # if empty next iteration
 
         maxz <- maxz.list[[i]]
+
+        ## pnorm gives the distribution function
+        ## For each detected peak region, the peak position (PEAK.LOC) is reported as the midpoint of the range, and the peak significance (PEAK.NLP) is reported as the sum of the Negative Log10 (P) (NLP)
         peak.nlps <- -pnorm(maxz, lower.tail=FALSE,log.p=TRUE)/log(10)
 
         peak.locs <- round((start(peaks)+end(peaks))/2)
         peak.cvg <- cvg[peak.locs,drop=TRUE]
         peak.ref <- ref[peak.locs,drop=TRUE]
+        ## ER(x) = (1 + r * C(x)) / (1 + B(x))
         peak.enrich <- (1+ratio*peak.cvg)/(1+peak.ref)
 
+        # check that the peak enrichment is high enough for type 1 peaks
+        # check that peak enrichment is higher than 3/8 of enriched
+        # the enrichment computed on per chromo basis
         if(i==1) min.er <<- quantile(peak.enrich,MIN.QUANT)
         ok <- (peak.enrich>min.er)
         if(!any(ok)) next
@@ -260,13 +298,28 @@ test.chr <- function(chr,
     pos.cvg <- CENTER.CVG[[type]][[2]]
 
     for (i in 1:3) {
+      print(i)
+      print(type)
+      print("PEAKS[[type]][[1]][[i]]")
+      print(PEAKS[[type]][[1]][[i]])
+      print("PEAKS[[type]][[2]][[i]]")
+      print(PEAKS[[type]][[2]][[i]])
       p1 <- PEAKS[[type]][[1]][[i]]
       p2 <- PEAKS[[type]][[2]][[i]]
       if(!length(p1) | !length(p2)) next
 
+
       ov <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
+      ## rows in p1 and p2 that overlap
+      ##      [,1] [,2]
+      ## [1,]   17   16
+      ## [2,]   19   17
+      ## [3,]   20   18
       if(!nrow(ov)) next
 
+      print("ov[,1]")
+      print(ov[,1])
+      # check if any of the ov columns contains duplicates
       dup1 <- (ov[,1] %in% ov[duplicated(ov[,1]),1])
       dup2 <- (ov[,2] %in% ov[duplicated(ov[,2]),2])
       is.multi <- dup1 | dup2
@@ -457,6 +510,7 @@ test.init <- function(chr, filePath="./chrcovers") {
 zscore <- function(x,y,r=1) {  # r = size.y/size.x
   dif <- (r*x-y)
   zs <- dif/sqrt(r*(x+y))
+  # line below replaces all NaN with 0
   zs[!dif] <- 0
   zs
 }
@@ -521,6 +575,7 @@ findForms1Replicate <- function(direction, is.type, type,
 }
 
 
+# takes direction because it is called twice - once forward and once reverse
 findForms2Replicates <- function(direction, is.type, type,
                                  min.z, min.width){
   ## print(direction) # FORWARD or REVERSE
@@ -552,8 +607,8 @@ findForms2Replicates <- function(direction, is.type, type,
   # why only storing the center?
   CENTER.CVG[[type]][[direction]] <<- cvg
 
-                                        # Form-1 test with consistency check
-  # w
+  # Form-1 test with consistency check
+  # check that for each sample
   signs1 <- sign(2*cvg1-surL1-surR1)
   signs2 <- sign(2*cvg2-surL2-surR2)
   ok <- (signs1==1)*(signs2==1)
@@ -561,8 +616,15 @@ findForms2Replicates <- function(direction, is.type, type,
   peaks1 <- slice(zscores1,lower=min.z)
   peaks1 <- peaks1[width(peaks1)>min.width]
   p1 <- as(peaks1,"IRanges")
+#  all the peaks of type 1
+## IRanges object with 923 ranges and 0 metadata columns:
+##             start       end     width
+##         <integer> <integer> <integer>
+##     [1]   2819736   2819816        81
+##     ...
+##   [923]  57442402  57442440        39
 
-                                        # Form-2 test with consistency check
+  # Form-2 test with consistency check
   signs1 <- sign(cvg1-surL1)
   signs2 <- sign(cvg2-surL2)
   ok <- (signs1==1)*(signs2==1)
@@ -584,9 +646,19 @@ findForms2Replicates <- function(direction, is.type, type,
   ## ref.size <- (SIZES[IS.CONTROL & is.dir & IS.CENTER & IS.REP1] +
   ##              SIZES[IS.CONTROL & is.dir & IS.CENTER & IS.REP2])
   ref.size <- sum(SIZES[IS.CONTROL & is.dir & IS.CENTER])				# no need for replicate inputs
+  print("is.dir")
+  print(is.dir)
+  print("ref.size")
+  print(ref.size)
+  print("SIZES[IS.CONTROL & is.dir & IS.CENTER]")
+  print(SIZES[IS.CONTROL & is.dir & IS.CENTER])
   cvg1.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP1]
   cvg2.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP2]
+  print("cvg1.size")
+  print(cvg1.size)
+  print(length(cvg1.size))
   cvg.size <- cvg1.size + cvg2.size
+  # divide ref.size by cvg1 because so can compare one sample against both input
   ratio1 <- ref.size/cvg1.size
   ratio2 <- ref.size/cvg2.size
   ratio <- ref.size/cvg.size
