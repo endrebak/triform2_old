@@ -124,29 +124,75 @@ triform <- function(configPath="./config.yml", params=list()){
 ##' @param chrcoversPath Path to chromosome coverage files
 ##' @param outputFilePath Path for output file with peak predictions
 ##' @return
-test.genome <- function(min.z=MIN.Z,
-                        min.shift=MIN.SHIFT,
-                        min.width=MIN.WIDTH,
+
+test.genome <- function(min.z=MIN.Z, min.shift=MIN.SHIFT, min.width=MIN.WIDTH,
                         chromosomes=CHRS,
                         chrcoversPath="./chrcovers",
-                        outputFilePath="./Triform_output.csv") {
+                        outputFilePath="./Triform_output.csv") {  # Karls new version
   INFO <<- NULL
-  for(chr in chromosomes) {
-    message("Triform processing ", chr)
-    flush.console()
+  for(chr in CHRS) {
+    cat("\n\tProcessing",chr,"... "); flush.console()
     INFO <<- rbind(INFO, test.chr(
-                                  chr=chr,
-                                  min.z=min.z,
-                                  min.shift=min.shift,
-                                  min.width=min.width,
-                                  filePath=chrcoversPath))
-    message("Found ", as.character(N.PEAKS), " peaks")
+	chr=chr,
+	min.z=min.z,
+	min.shift=min.shift,
+	min.width=min.width
+    ))
+    cat("done\n\t\tfound",N.PEAKS,"peaks")
   }
-  message("\n\nSaving results to path: ", outputFilePath)
-  flush.console()
-  write.table(INFO, file=outputFilePath, col.names=NA, quote=FALSE, sep="\t")
-  message("Finished.")
+  print(INFO)
+  INFO <<- INFO[order(-INFO$PEAK.NLP),]
+  nlps <- unique(INFO$PEAK.NLP)
+  sizes <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP == nlp))
+  indices <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP >= nlp))
+
+  nlrs <- mapply(function(nlp, j) {
+		m <- sum(INFO$PEAK.NLP >= nlp)	# Tarone modification for discrete nlp ## originally said, MAX.NLP, endre changed it to PEAK.NLP
+    ## print("m")
+    ## print(m)
+    ## print("INFO$MAX.NLP")
+    ## print(INFO$MAX.NLP)
+		b.y <- log10(sum((1:m)^-1))	# discrete Benjamini-Yekutieli offset
+		nls <- nlp + log10(j/m)		# discrete Benjamini-Hochberg adjustment
+		max(nls-b.y,0)			# discrete Benjamini-Yekutieli adjustment
+	}, nlp=nlps, j=indices)
+
+  M <- length(nlrs)
+  nlqs <- numeric(M)
+  for(i in 1:M) nlqs[i] <- max(nlrs[i:M])	# step-up procedure
+
+  nlqss <- unlist(mapply(function(nlq,size) rep(nlq,size), nlq=nlqs, size=sizes))
+  INFO <<- cbind(QVAL=10^-nlqss, NLQ=nlqss, INFO)
+
+  cat("\n\nSaving results ... "); flush.console()
+  write.table(INFO,file=outputFilePath,col.names=NA,quote=FALSE,sep="\t")
+  save(INFO,file="Triform.srf.info.RData")
+  cat("Finished.\n\n")
 }
+
+## test.genome <- function(min.z=MIN.Z,
+##                         min.shift=MIN.SHIFT,
+##                         min.width=MIN.WIDTH,
+##                         chromosomes=CHRS,
+##                         chrcoversPath="./chrcovers",
+##                         outputFilePath="./Triform_output.csv") {
+##   INFO <<- NULL
+##   for(chr in chromosomes) {
+##     message("Triform processing ", chr)
+##     flush.console()
+##     INFO <<- rbind(INFO, test.chr(
+##                                   chr=chr,
+##                                   min.z=min.z,
+##                                   min.shift=min.shift,
+##                                   min.width=min.width,
+##                                   filePath=chrcoversPath))
+##     message("Found ", as.character(N.PEAKS), " peaks")
+##   }
+##   message("\n\nSaving results to path: ", outputFilePath)
+##   flush.console()
+##   write.table(INFO, file=outputFilePath, col.names=NA, quote=FALSE, sep="\t")
+##   message("Finished.")
+## }
 
 
 ##' Finds peaks for a given chromosome
@@ -369,6 +415,7 @@ test.chr <- function(chr,
       n.peaks <- length(peaks)
 
       dfr <- data.frame(PEAK.FORM=i, PEAK.NLP=peak.nlps,
+                        ## PEAK.MAX.NLP=max(peak.nlp), # this was added by me, Endre
                         PEAK.WIDTH=width(peaks), PEAK.LOC=peak.locs,
                         PEAK.START=start(peaks), PEAK.END=end(peaks))
 
@@ -407,6 +454,8 @@ test.chr <- function(chr,
                                         # merge overlapping Form-2 and Form-3 peaks into Form-1 peaks
   peak.info <- with(peak.info,peak.info[order(PEAK.START,PEAK.END),])
   rng <- with(peak.info,IRanges(start=PEAK.START,end=PEAK.END))
+
+  # if you get an error here, your iranges is probably not recent enough
   ov <- matrix(as.matrix(findOverlaps(rng,maxgap=1,drop.self=TRUE,drop.redundant=TRUE)),ncol=2)
   if(!!nrow(ov)) {
     peak.info[ov[,1],"PEAK.FORM"] <- 1
