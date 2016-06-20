@@ -263,6 +263,7 @@ test.chr <- function(chr,
         ## pnorm gives the distribution function
         ## For each detected peak region, the peak position (PEAK.LOC) is reported as the midpoint of the range, and the peak significance (PEAK.NLP) is reported as the sum of the Negative Log10 (P) (NLP)
         peak.nlps <- -pnorm(maxz, lower.tail=FALSE,log.p=TRUE)/log(10)
+        max.nlps <- -pnorm(max.z, low=FALSE, log=TRUE)/log(10)
 
         peak.locs <- round((start(peaks)+end(peaks))/2)
         peak.cvg <- cvg[peak.locs,drop=TRUE]
@@ -283,9 +284,14 @@ test.chr <- function(chr,
 
         PEAKS[[type]][[direction]][[i]] <<- peaks
         n.peaks <- length(peaks)
-        dfr <- data.frame(PEAK.LOC=peak.locs,
-                          PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
-                          PEAK.START=start(peaks), PEAK.END=end(peaks))
+
+
+        dfr <- data.frame(NLP=peak.nlps, MAX.NLP=max.nlps, LOC=peak.locs,
+                          WIDTH=width(peaks), START=start(peaks), END=end(peaks),
+                          CVG=peak.cvg, SURL=peak.surL, SURR=peak.surR, FORM=i)
+        ## dfr <- data.frame(PEAK.LOC=peak.locs,
+        ##                   PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
+        ##                   PEAK.START=start(peaks), PEAK.END=end(peaks))
         PEAK.INFO[[type]][[direction]][[i]] <<- dfr
       }
     }

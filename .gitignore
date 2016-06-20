@@ -1,4 +1,10 @@
 *.csv
 *.pyc
 *.RData
+*.Rhistory
+*.pdf
+*egg-info*
+*.swp
 /chrcovers
+build/
+dist/

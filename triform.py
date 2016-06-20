@@ -1,6 +1,8 @@
 from sys import argv
 import argparse
 import os
+import pkg_resources
+from subprocess import call
 
 from triform.version import __version__
 
@@ -71,3 +73,8 @@ parser.add_argument('--version',
 if __name__ == '__main__':
     args = parser.parse_args()
     print("# triform " + " ".join(argv[1:]))
+    infile = args.treatment[0]
+
+    chromosome_script = pkg_resources.resource_filename("triform",
+                                                        "R/chromosome.R")
+    call("Rscript {} {}".format(chromosome_script, infile), shell=True)
