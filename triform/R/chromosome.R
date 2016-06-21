@@ -1,13 +1,13 @@
 args <- commandArgs(TRUE)
 
 infile = args[1]
-print(infile)
-print("hello from R!")
-stop()
-chromosome = args[2]
-min.z = args[3]
-min.shift = args[4]
-min.width = args[5]
+tempdir = args[2]
+chromosome = args[3]
+min.z = args[4]
+min.shift = args[5]
+min.width = args[6]
+
+peak.info = test.chr(chromosome, min.z = min.z, min.shift=min.shift, min.width = min.width)
 
 
 test.chr <- function(chr,

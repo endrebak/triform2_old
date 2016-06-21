@@ -1,5 +1,31 @@
+from sys import argv
+import argparse
+import os
+import pkg_resources
 from subprocess import call
-"""
-PROBABLY best to have R files that are part of distribution,
-get with pkg_data, call from here
-"""
+
+
+def make_ranged_data(infile, outfile):
+
+    make_ranged_data_script = pkg_resources.resource_filename(
+        "triform", "R/makeRangedData.R")
+    command = "Rscript {make_ranged_data_script} {infile} {outfile}".format(
+        make_ranged_data_script=make_ranged_data_script,
+        infile=infile,
+        outfile=outfile)
+    print(command)
+    call(command, shell=True)
+
+
+def make_chromosome_cover_file(infile, outfile, chromosome, gapped_width):
+
+    make_chromosome_cover_files_script = pkg_resources.resource_filename(
+        "triform", "R/makeChromosomeCoverFiles.R")
+    command = "Rscript {make_chromosome_cover_files_script} {infile} {outfile} {chromosome} {gapped_width}".format(
+        make_chromosome_cover_files_script=make_chromosome_cover_files_script,
+        infile=infile,
+        outfile=outfile,
+        chromosome=chromosome,
+        gapped_width=gapped_width)
+    print(command)
+    call(command, shell=True)

@@ -351,6 +351,7 @@ test.genome <- function(min.z=MIN.Z,
   INFO <<- NULL
   for(chr in CHRS) {
     cat("\n\tProcessing",chr,"... "); flush.console()
+    # calls chromosome function for each chr, adds to list
     INFO <<- rbind(INFO, test.chr(
 									 chr=chr,
 									 min.z=min.z,
