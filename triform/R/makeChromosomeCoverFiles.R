@@ -1,6 +1,6 @@
 
 options(stringsAsFactors=FALSE)
-suppressMessages(library(IRanges))
+suppressMessages(library(GenomicRanges))
 args <- commandArgs(TRUE)
 
 infile = args[1]
@@ -12,7 +12,9 @@ makeChromosomeCoverFiles <- function(infile, outfile, chr, gapped.width){
     if (grepl("[_M]", chr)) stop()       # Ignore chromosome M
     rd <- get(load(infile))
 
-    strands <- strand(rd)
+    # hack to avoid * levels
+    strands <- factor(as.vector(strand(rd)), levels=c("+", "-"))
+
     ly <- split(rd, strands)
     lsize <- lapply(ly, length)
     lstart <- lapply(ly, start)

@@ -1,20 +1,113 @@
+
+suppressMessages(library(IRanges))
 args <- commandArgs(TRUE)
 
 infile = args[1]
-tempdir = args[2]
-chromosome = args[3]
-min.z = args[4]
-min.shift = args[5]
-min.width = args[6]
+is.input = as.logical(args[2])
+MIN.SHIFT <- strtoi(args[3])
+MIN.WIDTH <- strtoi(args[4])
+MIN.ENRICHMENT <- as.numeric(args[5])
+MIN.Z <- as.numeric(args[6])
+FLANK.DELTA <- strtoi(args[7])
+FLANK.SHIFT <- 2*FLANK.DELTA
+FLANK.DELTA.PAD <- Rle(0,FLANK.DELTA)
 
-peak.info = test.chr(chromosome, min.z = min.z, min.shift=min.shift, min.width = min.width)
+
+## SUMCVG.NAMES <- c("backgr_huds_Gm12878_rep1","backgr_huds_Gm12878_rep2",
+## 									"srf_huds_Gm12878_rep1","srf_huds_Gm12878_rep2")
+## TARGET.NAMES <- "srf_huds_Gm12878"
+
+## N.TYPES <- length(SUMCVG.NAMES)
+## TYPES <- factor(1:N.TYPES, lab=SUMCVG.NAMES)
+
+DIRECTIONS <- factor(1:2, lab=c("REVERSE","FORWARD"))
+N.DIRS <- length(DIRECTIONS)
+
+LOCATIONS <- factor(1:3, lab=c("LEFT","RIGHT","CENTER"))
+N.LOCS <- length(LOCATIONS)
+
+N.DIRLOCS <- N.DIRS*N.LOCS
+print(N.DIRLOCS)
+
+DIRECTION <- rep(rep(DIRECTIONS,ea=N.LOCS), 1)
+LOCATION <- rep(LOCATIONS,N.DIRS*1)
+CVG.NAMES <- paste(DIRECTIONS,LOCATION,sep=".")
 
 
-test.chr <- function(chr,
+IS.LEFT <<- grepl("LEFT",CVG.NAMES)
+IS.RIGHT <<- grepl("RIGHT",CVG.NAMES)
+IS.CENTER <<- grepl("CENTER",CVG.NAMES)
+# these are needed for multifile inputs - we want one at a time
+## DIRECTION <- rep(rep(DIRECTIONS,ea=N.LOCS),N.TYPES)
+## LOCATION <- rep(LOCATIONS,N.DIRS*N.TYPES)
+## TYPE <- rep(TYPES,ea=N.DIRLOCS)
+## CVG.NAMES <- paste(TYPE,DIRECTION,LOCATION,sep=".")
+## IS.REP1 <- grepl("_rep1",CVG.NAMES)
+## IS.REP2 <- grepl("_rep2",CVG.NAMES)
+## IS.INPUT <- !grepl("srf",CVG.NAMES)
+
+test.init <- function(infile, is.input) {
+  chrcovers <- get(load(infile))
+  print(chrcovers)
+
+  CVG <<- list()
+
+  # what this loop does:
+  # create coverage for product(["+", "-"], ["left", "centre", "right"))
+  # can replace with for
+  # for (i in c("+", "-")){ for (j in c("f", "c", "b")) {print(paste(i, j))}}
+  for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
+    print("i")
+    print(i)
+    n <- i	# SAMPLE.DIRECTON.LOCATION index
+    print("n")
+    print(n)
+    print("N.LOCS")
+    print(N.LOCS)
+    j <- ceiling(i/N.LOCS)    		# DIRECTION index
+    print("j")
+    print(j)
+    cvg <- chrcovers$CVG[[j]]        			# strand-specific coverage
+    print("cvg")
+    print(cvg)
+
+    if(is.input) {
+      if(IS.CENTER[n]) {
+        CVG[[n]] <<- cvg
+      }
+      next												# no need for flanking input coverage
+    }
+    print("here")
+    print(1 + (i-1)%%N.LOCS)
+    print(cvg)
+    switch(1 + (i-1)%%N.LOCS,			# LOCATION index
+            CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])),		# strand-specific coverage on left flank
+            CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD),							#	strand-specific coverage on right flank
+            CVG[[n]] <<- cvg																										# strand-specific coverage on center
+    )
+  }
+  ## print(CVG.NAMES)
+  ## print("length(CVG.NAMES)")
+  ## print(length(CVG.NAMES))
+  ## print("length(CVG)")
+  ## print(length(CVG))
+  names(CVG) <<- CVG.NAMES
+
+  maxlen <- max(sapply(CVG,length))
+  CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
+  names(SIZES) <<- CVG.NAMES
+
+  CHR <<- chr
+  stop("In end of test.init")
+}
+
+
+test.chr <- function(infile,
+                     is.input,
                      min.z=MIN.Z,
 										 min.shift=MIN.SHIFT,
                      min.width=MIN.WIDTH) {
-  test.init(chr)
+  test.init(infile, is.input)
 
   PEAKS <<- list()
   PEAK.INFO <<- list()
@@ -123,7 +216,7 @@ test.chr <- function(chr,
 				peak.ref <- ref[peak.locs,drop=TRUE]
 				peak.enrich <- (1+ratio*peak.cvg)/(1+peak.ref)
 
-				if(i==1) min.er <<- quantile(peak.enrich,MIN.QUANT)
+				if(i==1) min.er <<- quantile(peak.enrich,MIN.ENRICHMENT)
 				ok <- (peak.enrich>min.er)
 				if(!any(ok)) next
 
@@ -246,7 +339,7 @@ test.chr <- function(chr,
 		PEAK.INFO[[type]][[direction]][[3]] <<- info
 	}
 
-  # exclude overlapping Form-2 and Form-3 peaks
+# exclude overlapping Form-2 and Form-3 peaks
 	ov23 <- matrix(as.matrix(findOverlaps(p2,p3,maxgap=100)),ncol=2)
 	if(!!nrow(ov23)) {
 		ex2 <- (1:length(p2) %in% ov23[,1])
@@ -268,50 +361,8 @@ test.chr <- function(chr,
 	peak.info
 }
 
-
-test.init <- function(chr) {
-  if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
-  if(chr==CHR) return()
-
-  load(paste("ChrCovers/",chr,".RData",sep=""), .GlobalEnv)
-
-  CVG <<- list()
-  SIZES <<- NULL
-  for(h in 1:N.TYPES) {       			# TYPE index
-    type <- SUMCVG.NAMES[h]
-    SIZES <<- c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS))
-    cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
-
-    for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
-      n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
-      j <- ceiling(i/N.LOCS)    		# DIRECTION index
-      cvg <- cvgs[[j]]        			# strand-specific coverage
-
-			if(IS.INPUT[n]) {
-				if(IS.CENTER[n]) {
-					CVG[[n]] <<- cvg
-				}
-				next												# no need for flanking input coverage
-			}
-      switch(1 + (i-1)%%N.LOCS,			# LOCATION index
-             CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])),		# strand-specific coverage on left flank
-             CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD),							#	strand-specific coverage on right flank
-             CVG[[n]] <<- cvg																										# strand-specific coverage on center
-      )
-    }
-  }
-  names(CVG) <<- CVG.NAMES
-  maxlen <- max(sapply(CVG,length))
-  CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
-  names(SIZES) <<- CVG.NAMES
-
-  CHR <<- chr
-}
-
-
-zscore <- function(x,y,r=1) {  # r = size.y/size.x
-  dif <- (r*x-y)
-  zs <- dif/sqrt(r*(x+y))
-  zs[!dif] <- 0
-  zs
-}
+test.chr(infile,
+         is.input,
+         min.z=MIN.Z,
+         min.shift=MIN.SHIFT,
+         min.width=MIN.WIDTH)

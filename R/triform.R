@@ -125,74 +125,74 @@ triform <- function(configPath="./config.yml", params=list()){
 ##' @param outputFilePath Path for output file with peak predictions
 ##' @return
 
-test.genome <- function(min.z=MIN.Z, min.shift=MIN.SHIFT, min.width=MIN.WIDTH,
-                        chromosomes=CHRS,
-                        chrcoversPath="./chrcovers",
-                        outputFilePath="./Triform_output.csv") {  # Karls new version
-  INFO <<- NULL
-  for(chr in CHRS) {
-    cat("\n\tProcessing",chr,"... "); flush.console()
-    INFO <<- rbind(INFO, test.chr(
-	chr=chr,
-	min.z=min.z,
-	min.shift=min.shift,
-	min.width=min.width
-    ))
-    cat("done\n\t\tfound",N.PEAKS,"peaks")
-  }
-  print(INFO)
-  INFO <<- INFO[order(-INFO$PEAK.NLP),]
-  nlps <- unique(INFO$PEAK.NLP)
-  sizes <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP == nlp))
-  indices <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP >= nlp))
-
-  nlrs <- mapply(function(nlp, j) {
-		m <- sum(INFO$PEAK.NLP >= nlp)	# Tarone modification for discrete nlp ## originally said, MAX.NLP, endre changed it to PEAK.NLP
-    ## print("m")
-    ## print(m)
-    ## print("INFO$MAX.NLP")
-    ## print(INFO$MAX.NLP)
-		b.y <- log10(sum((1:m)^-1))	# discrete Benjamini-Yekutieli offset
-		nls <- nlp + log10(j/m)		# discrete Benjamini-Hochberg adjustment
-		max(nls-b.y,0)			# discrete Benjamini-Yekutieli adjustment
-	}, nlp=nlps, j=indices)
-
-  M <- length(nlrs)
-  nlqs <- numeric(M)
-  for(i in 1:M) nlqs[i] <- max(nlrs[i:M])	# step-up procedure
-
-  nlqss <- unlist(mapply(function(nlq,size) rep(nlq,size), nlq=nlqs, size=sizes))
-  INFO <<- cbind(QVAL=10^-nlqss, NLQ=nlqss, INFO)
-
-  cat("\n\nSaving results ... "); flush.console()
-  write.table(INFO,file=outputFilePath,col.names=NA,quote=FALSE,sep="\t")
-  save(INFO,file="Triform.srf.info.RData")
-  cat("Finished.\n\n")
-}
-
-## test.genome <- function(min.z=MIN.Z,
-##                         min.shift=MIN.SHIFT,
-##                         min.width=MIN.WIDTH,
+## test.genome <- function(min.z=MIN.Z, min.shift=MIN.SHIFT, min.width=MIN.WIDTH,
 ##                         chromosomes=CHRS,
 ##                         chrcoversPath="./chrcovers",
-##                         outputFilePath="./Triform_output.csv") {
+##                         outputFilePath="./Triform_output.csv") {  # Karls new version
 ##   INFO <<- NULL
-##   for(chr in chromosomes) {
-##     message("Triform processing ", chr)
-##     flush.console()
+##   for(chr in CHRS) {
+##     cat("\n\tProcessing",chr,"... "); flush.console()
 ##     INFO <<- rbind(INFO, test.chr(
-##                                   chr=chr,
-##                                   min.z=min.z,
-##                                   min.shift=min.shift,
-##                                   min.width=min.width,
-##                                   filePath=chrcoversPath))
-##     message("Found ", as.character(N.PEAKS), " peaks")
+## 	chr=chr,
+## 	min.z=min.z,
+## 	min.shift=min.shift,
+## 	min.width=min.width
+##     ))
+##     cat("done\n\t\tfound",N.PEAKS,"peaks")
 ##   }
-##   message("\n\nSaving results to path: ", outputFilePath)
-##   flush.console()
-##   write.table(INFO, file=outputFilePath, col.names=NA, quote=FALSE, sep="\t")
-##   message("Finished.")
+##   print(INFO)
+##   INFO <<- INFO[order(-INFO$PEAK.NLP),]
+##   nlps <- unique(INFO$PEAK.NLP)
+##   sizes <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP == nlp))
+##   indices <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP >= nlp))
+
+##   nlrs <- mapply(function(nlp, j) {
+## 		m <- sum(INFO$PEAK.NLP >= nlp)	# Tarone modification for discrete nlp ## originally said, MAX.NLP, endre changed it to PEAK.NLP
+##     ## print("m")
+##     ## print(m)
+##     ## print("INFO$MAX.NLP")
+##     ## print(INFO$MAX.NLP)
+## 		b.y <- log10(sum((1:m)^-1))	# discrete Benjamini-Yekutieli offset
+## 		nls <- nlp + log10(j/m)		# discrete Benjamini-Hochberg adjustment
+## 		max(nls-b.y,0)			# discrete Benjamini-Yekutieli adjustment
+## 	}, nlp=nlps, j=indices)
+
+##   M <- length(nlrs)
+##   nlqs <- numeric(M)
+##   for(i in 1:M) nlqs[i] <- max(nlrs[i:M])	# step-up procedure
+
+##   nlqss <- unlist(mapply(function(nlq,size) rep(nlq,size), nlq=nlqs, size=sizes))
+##   INFO <<- cbind(QVAL=10^-nlqss, NLQ=nlqss, INFO)
+
+##   cat("\n\nSaving results ... "); flush.console()
+##   write.table(INFO,file=outputFilePath,col.names=NA,quote=FALSE,sep="\t")
+##   save(INFO,file="Triform.srf.info.RData")
+##   cat("Finished.\n\n")
 ## }
+
+test.genome <- function(min.z=MIN.Z,
+                        min.shift=MIN.SHIFT,
+                        min.width=MIN.WIDTH,
+                        chromosomes=CHRS,
+                        chrcoversPath="./chrcovers",
+                        outputFilePath="./Triform_output.csv") {
+  INFO <<- NULL
+  for(chr in chromosomes) {
+    message("Triform processing ", chr)
+    flush.console()
+    INFO <<- rbind(INFO, test.chr(
+                                  chr=chr,
+                                  min.z=min.z,
+                                  min.shift=min.shift,
+                                  min.width=min.width,
+                                  filePath=chrcoversPath))
+    message("Found ", as.character(N.PEAKS), " peaks")
+  }
+  message("\n\nSaving results to path: ", outputFilePath)
+  flush.console()
+  write.table(INFO, file=outputFilePath, col.names=NA, quote=FALSE, sep="\t")
+  message("Finished.")
+}
 
 
 ##' Finds peaks for a given chromosome
@@ -209,7 +209,8 @@ test.chr <- function(chr,
                      min.shift=MIN.SHIFT,
                      min.width=MIN.WIDTH,
                      filePath="./chrcovers") {
-  ## test.init(chr, filePath)
+  test.init(chr, filePath)
+  stop("ooga")
   ## save(CVG, file="temp/cvg.RData")
   ## save(SIZES, file="temp/sizes.RData")
   ## save(CHR, file="temp/chr.RData")
@@ -305,11 +306,12 @@ test.chr <- function(chr,
         if(!length(peaks)) next # if empty next iteration
 
         maxz <- maxz.list[[i]]
+        peak.nlps <- -pnorm(maxz, lower.tail=FALSE,log.p=TRUE)/log(10)
 
         ## pnorm gives the distribution function
         ## For each detected peak region, the peak position (PEAK.LOC) is reported as the midpoint of the range, and the peak significance (PEAK.NLP) is reported as the sum of the Negative Log10 (P) (NLP)
-        peak.nlps <- -pnorm(maxz, lower.tail=FALSE,log.p=TRUE)/log(10)
-        max.nlps <- -pnorm(max.z, low=FALSE, log=TRUE)/log(10)
+        ## peak.nlps <- -pnorm(max.z, lower.tail=FALSE,log.p=TRUE)/log(10)
+        ## ## max.nlps <- -pnorm(max.z, low=FALSE, log=TRUE)/log(10)
 
         peak.locs <- round((start(peaks)+end(peaks))/2)
         peak.cvg <- cvg[peak.locs,drop=TRUE]
@@ -332,12 +334,12 @@ test.chr <- function(chr,
         n.peaks <- length(peaks)
 
 
-        dfr <- data.frame(NLP=peak.nlps, MAX.NLP=max.nlps, LOC=peak.locs,
-                          WIDTH=width(peaks), START=start(peaks), END=end(peaks),
-                          CVG=peak.cvg, SURL=peak.surL, SURR=peak.surR, FORM=i)
-        ## dfr <- data.frame(PEAK.LOC=peak.locs,
-        ##                   PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
-        ##                   PEAK.START=start(peaks), PEAK.END=end(peaks))
+        ## dfr <- data.frame(NLP=peak.nlps, MAX.NLP=max.nlps, LOC=peak.locs,
+        ##                   WIDTH=width(peaks), START=start(peaks), END=end(peaks),
+        ##                   CVG=peak.cvg, SURL=peak.surL, SURR=peak.surR, FORM=i)
+        dfr <- data.frame(PEAK.LOC=peak.locs,
+                          PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
+                          PEAK.START=start(peaks), PEAK.END=end(peaks))
         PEAK.INFO[[type]][[direction]][[i]] <<- dfr
       }
     }
@@ -482,8 +484,8 @@ test.chr <- function(chr,
 ##' @return
 test.init <- function(chr, filePath="./chrcovers") {
   # Checking if CHR exists in the environment
-  if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
-  if(chr==CHR) return()
+  ## if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
+  ## if(chr==CHR) return()
 
   ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
   load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
@@ -511,6 +513,10 @@ test.init <- function(chr, filePath="./chrcovers") {
     ## ##   Lengths: 2709647      29      71      29 ...      56     100     161     100
     ## ##   Values :       0       1       2       1 ...       0       1       0       1
     cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
+    print(cvgs)
+    stop()
+    print("N.DIRLOCS")
+    print(N.DIRLOCS)
 
     for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
       print("i")
@@ -518,11 +524,18 @@ test.init <- function(chr, filePath="./chrcovers") {
       n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
       print("n")
       print(n)
+      print("N.LOCS")
+      print(N.LOCS)
       j <- ceiling(i/N.LOCS)    		# DIRECTION index
       print("j")
       print(j)
       cvg <- cvgs[[j]]        			# strand-specific coverage
+
+      print("N.LOCS")
+      print(N.LOCS)
+      print("cvg")
       print(cvg)
+      stop("in test.init")
 
       if(IS.CONTROL[n]) {
         if(IS.CENTER[n]) {

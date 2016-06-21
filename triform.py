@@ -6,6 +6,7 @@ from subprocess import call
 
 from triform.version import __version__
 from triform.preprocess import (make_ranged_data, make_chromosome_cover_file)
+from triform.chromosome import chromosome
 
 parser = argparse.ArgumentParser(
     description=
@@ -52,13 +53,13 @@ parser.add_argument(
     '''Minimum upper-tail z-value (default corresponds to standard normal p = 0.1)''')
 
 parser.add_argument(
-    '--min-lag',
-    '-ml',
+    '--min-shift',
+    '-ms',
     required=False,
     default=10,
     type=int,
     help=
-    '''Minimum inter-strand lag (shift) between peak coverage distributions (default 10 bp).''')
+    '''Minimum inter-strand shift (lag) between peak coverage distributions (default 10 bp).''')
 
 parser.add_argument(
     '--min-width',
@@ -87,6 +88,15 @@ parser.add_argument(
     help=
     '''Fixed spacing between central and flanking locations (must be > w). Default: 150 bp.''')
 
+parser.add_argument(
+    '--min-enrichment',
+    '-mr',
+    required=False,
+    default=0.375,
+    type=float,
+    help=
+    '''Minimum local enrichment ratio (default 3/8 quantile of the enrichment ratio)''')
+
 parser.add_argument('--tmpdir',
                     '-td',
                     required=False,
@@ -103,8 +113,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print("# triform " + " ".join(argv[1:]))
     infile = args.treatment[0]
-    make_ranged_data(infile, "testing.rds")
-    make_chromosome_cover_file("testing.rds", "deleteme.rds", "chr22", 100)
+    # make_ranged_data(infile, "testing.rds")
+    # make_chromosome_cover_file("testing.rds", "deleteme.rds", "chr22", 100)
+
+    chromosome("deleteme.rds", False, args)
 
     # chromosome_script = pkg_resources.resource_filename("triform",
     #                                                     "R/chromosome.R")
