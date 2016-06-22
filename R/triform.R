@@ -209,8 +209,7 @@ test.chr <- function(chr,
                      min.shift=MIN.SHIFT,
                      min.width=MIN.WIDTH,
                      filePath="./chrcovers") {
-  test.init(chr, filePath)
-  stop("ooga")
+  ## test.init(chr, filePath)
   ## save(CVG, file="temp/cvg.RData")
   ## save(SIZES, file="temp/sizes.RData")
   ## save(CHR, file="temp/chr.RData")

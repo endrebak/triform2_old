@@ -5,11 +5,9 @@ args <- commandArgs(TRUE)
 
 infile = args[1]
 outfile = args[2]
-chr = args[3]
-gapped.width = strtoi(args[4])
+gapped.width = strtoi(args[3])
 
-makeChromosomeCoverFiles <- function(infile, outfile, chr, gapped.width){
-    if (grepl("[_M]", chr)) stop()       # Ignore chromosome M
+makeChromosomeCoverFiles <- function(infile, outfile, gapped.width){
     rd <- get(load(infile))
 
     # hack to avoid * levels
@@ -30,4 +28,4 @@ makeChromosomeCoverFiles <- function(infile, outfile, chr, gapped.width){
     save(covers, file=outfile)
 }
 
-makeChromosomeCoverFiles(infile, outfile, chr, gapped.width)
+makeChromosomeCoverFiles(infile, outfile, gapped.width)

@@ -17,15 +17,14 @@ def make_ranged_data(infile, outfile):
     call(command, shell=True)
 
 
-def make_chromosome_cover_file(infile, outfile, chromosome, gapped_width):
+def make_chromosome_cover_file(infile, outfile, gapped_width):
 
     make_chromosome_cover_files_script = pkg_resources.resource_filename(
         "triform", "R/makeChromosomeCoverFiles.R")
-    command = "Rscript {make_chromosome_cover_files_script} {infile} {outfile} {chromosome} {gapped_width}".format(
+    command = "Rscript {make_chromosome_cover_files_script} {infile} {outfile} {gapped_width}".format(
         make_chromosome_cover_files_script=make_chromosome_cover_files_script,
         infile=infile,
         outfile=outfile,
-        chromosome=chromosome,
         gapped_width=gapped_width)
     print(command)
     call(command, shell=True)

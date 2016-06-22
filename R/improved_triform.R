@@ -80,6 +80,7 @@ test.init <- function(chr) {
   CHR <<- chr
 }
 
+# Hoel test
 zscore <- function(x,y,r=1) {  # r = size.y/size.x
   dif <- (r*x-y)
   zs <- dif/sqrt(r*(x+y))

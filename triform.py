@@ -1,8 +1,13 @@
+from collections import defaultdict
+from itertools import product
 from sys import argv
 import argparse
 import os
+from os.path import basename, join
 import pkg_resources
 from subprocess import call
+
+from joblib import Parallel, delayed
 
 from triform.version import __version__
 from triform.preprocess import (make_ranged_data, make_chromosome_cover_file)
@@ -100,7 +105,7 @@ parser.add_argument(
 parser.add_argument('--tmpdir',
                     '-td',
                     required=False,
-                    default="/tmp/",
+                    default="/tmp/{process_id}/",
                     type=str,
                     help='''Directory to store intermediate results in.''')
 
@@ -109,14 +114,64 @@ parser.add_argument('--version',
                     action='version',
                     version='%(prog)s {}'.format(__version__))
 
+
+def parallel_make_ranged_data(in_out_map, args):
+
+    return Parallel(n_jobs=args.number_cores)(delayed(make_ranged_data)(
+        infile, outfile) for (infile, outfile) in in_out_map.items())
+
+
+def parallel_make_chromosome_cover_file(in_out_map2, args):
+
+    for infile in in_out_map2:
+        Parallel(n_jobs=args.number_cores)(delayed(make_chromosome_cover_file)(
+            infile, outfile, args.read_width)
+                                           for (infile, outfile) in product(
+                                               [infile], in_out_map2[infile]))
+
+
+def add_chromosome_to_filename(files, in_out_map):
+
+    outfiles2 = defaultdict(list)
+
+    for infile in files:
+        infile2 = in_out_map[infile]
+        path_start, path_end = infile2.rsplit("/", 1)
+        for chromosome in ["chr22"]:
+            chr_file = join(path_start, chromosome + "_" + path_end)
+            outfiles2[infile2].append(chr_file)
+
+    return outfiles2
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     print("# triform " + " ".join(argv[1:]))
-    infile = args.treatment[0]
-    # make_ranged_data(infile, "testing.rds")
-    # make_chromosome_cover_file("testing.rds", "deleteme.rds", "chr22", 100)
+    chip = args.treatment
+    input = args.control
 
-    chromosome("deleteme.rds", False, args)
+    if args.tmpdir == "/tmp/{process_id}":
+        pid = str(os.getpid())
+        outpath = join("/tmp/", pid)
+    else:
+        outpath = args.tmpdir
+
+    call("mkdir -p {}".format(outpath), shell=True)
+
+    in_out_map = dict((infile, join(outpath, basename(infile) + ".RData"))
+                      for infile in chip + input)
+    # parallel_make_ranged_data(in_out_map, args)
+
+    in_out_map2 = add_chromosome_to_filename(chip + input, in_out_map)
+    # print(in_out_map2)
+    # parallel_make_chromosome_cover_file(in_out_map2, args)
+    # print(in_out_map2)
+
+    # chromosome_files = {}
+
+    # chip_files = defaultdict(list)
+    # for infile in chip:
+    #     parallel_make_chromosome_cover_file(infile, args)
 
     # chromosome_script = pkg_resources.resource_filename("triform",
     #                                                     "R/chromosome.R")
