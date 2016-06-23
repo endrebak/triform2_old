@@ -28,3 +28,5 @@ def make_chromosome_cover_file(infile, outfile, gapped_width):
         gapped_width=gapped_width)
     print(command)
     call(command, shell=True)
+
+# def init():

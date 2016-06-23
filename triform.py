@@ -125,8 +125,8 @@ def parallel_make_chromosome_cover_file(in_out_map2, args):
 
     for infile in in_out_map2:
         Parallel(n_jobs=args.number_cores)(delayed(make_chromosome_cover_file)(
-            infile, outfile, args.read_width)
-                                           for (infile, outfile) in product(
+            infile, outfiles, args.read_width)
+                                           for (infile, outfiles) in product(
                                                [infile], in_out_map2[infile]))
 
 
@@ -138,8 +138,11 @@ def add_chromosome_to_filename(files, in_out_map):
         infile2 = in_out_map[infile]
         path_start, path_end = infile2.rsplit("/", 1)
         for chromosome in ["chr22"]:
-            chr_file = join(path_start, chromosome + "_" + path_end)
-            outfiles2[infile2].append(chr_file)
+            chr_p_file = join(path_start,
+                              "_".join([chromosome, "FORWARD", path_end]))
+            chr_m_file = join(path_start,
+                              "_".join([chromosome, "REVERSE", path_end]))
+            outfiles2[infile2].append(",".join([chr_p_file, chr_m_file]))
 
     return outfiles2
 
@@ -163,6 +166,11 @@ if __name__ == '__main__':
     # parallel_make_ranged_data(in_out_map, args)
 
     in_out_map2 = add_chromosome_to_filename(chip + input, in_out_map)
+
+    print(in_out_map.keys())
+    chip_files = in_out_map2[in_out_map[chip[0]]][0]
+    input_files = in_out_map2[in_out_map[input[0]]][0]
+    # chromosome(chip_files, input_files, args)
     # print(in_out_map2)
     # parallel_make_chromosome_cover_file(in_out_map2, args)
     # print(in_out_map2)

@@ -2,8 +2,8 @@
 suppressMessages(library(IRanges))
 args <- commandArgs(TRUE)
 
-infile = args[1]
-is.input = as.logical(args[2])
+chipfiles = strsplit(args[1], ",")[[1]]
+inputfiles = strsplit(args[2], ",")[[1]]
 MIN.SHIFT <- strtoi(args[3])
 MIN.WIDTH <- strtoi(args[4])
 MIN.ENRICHMENT <- as.numeric(args[5])
@@ -45,49 +45,8 @@ IS.CENTER <<- grepl("CENTER",CVG.NAMES)
 ## IS.REP2 <- grepl("_rep2",CVG.NAMES)
 ## IS.INPUT <- !grepl("srf",CVG.NAMES)
 
-# should take all chromosomewise files at same time
-# should be called once per file, outside of test.chr
-test.init <- function(infile, is.input) {
-  chrcovers <- get(load(infile))
-
-  CVG <<- list()
-
-  # what this loop does:
-  # create coverage for product(["+", "-"], ["left", "centre", "right"))
-  # can replace with for
-  # for (i in c("+", "-")){ for (j in c("f", "c", "b")) {print(paste(i, j))}}
-  SIZES <<- list()
-  for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
-    n <- i	# SAMPLE.DIRECTON.LOCATION index
-    j <- ceiling(i/N.LOCS)    		# DIRECTION index
-    cvg <- chrcovers$CVG[[j]]        			# strand-specific coverage
-    SIZES <<- rep(chrcovers$SIZE, N.LOCS)
-
-    if(is.input) {
-      if(IS.CENTER[n]) {
-        CVG[[n]] <<- cvg
-      }
-      next												# no need for flanking input coverage
-    }
-    switch(1 + (i-1)%%N.LOCS,			# LOCATION index
-            CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])),		# strand-specific coverage on left flank
-            CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD),							#	strand-specific coverage on right flank
-            CVG[[n]] <<- cvg																										# strand-specific coverage on center
-    )
-  }
-  names(CVG) <<- CVG.NAMES
-
-  maxlen <- max(sapply(CVG,length))
-  CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
-  names(SIZES) <<- CVG.NAMES
-  save(CVG, file="CVG.RData")
-  save(SIZES, file="SIZES.RData")
-}
-
-####### NEXT STEP: do all in python so test.chr can take several files function
 ####### perhaps CVG should take size also?
 
-# Make own function for input!
 test.chr <- function(chipfiles,
                      inputfiles,
                      min.z=MIN.Z,
@@ -111,18 +70,22 @@ test.chr <- function(chipfiles,
     ## zscores4 <- zscore(cvg,ref,ratio) * ok
 
   #need to produce ok, signs
-  ok = c(TRUE)
-  CHIPSIZES <- list()
-  for(file in chipfiles){
-    load(file)
-    signs1 <- sign(2*cvg1-surL1-surR1)
-    ok <- Reduce("*", signs1, ok)
-    CHIPSIZES[[file]] <- size
-  }
+  ## ok = c(TRUE)
+  ## CHIPSIZES <- list()
+  ## for(file in chipfiles){
+  ##   load(file)
+  ##   signs1 <- sign(2*cvg1-surL1-surR1)
+  ##   ok <- Reduce("*", signs1, ok)
+  ##   CHIPSIZES[[file]] <- size
+  ## }
 
   ref.size = 0
+  print(inputfiles)
+  stop("hello world")
   for(file in inputfiles){
-    load(file)
+    ref <- get(load(file))
+    print(ref)
+    stop("stopping ref")
     ref.size = ref.size + size
   }
 
@@ -133,6 +96,8 @@ test.chr <- function(chipfiles,
 
   # done once for plus, once for minus
   for(direction in DIRECTIONS){
+    print("oooo")
+    stop("ooooo*2")
     PEAKS[[direction]] <<- list(IRanges(),IRanges(),IRanges())
     PEAK.INFO[[direction]] <<- list(NULL,NULL,NULL)
 
@@ -255,7 +220,7 @@ test.chr <- function(chipfiles,
       PEAK.INFO[[direction]][[i]] <<- dfr
     }
   }
-
+}
   # done finding peaks per strand
 
   direction <- "merged"
