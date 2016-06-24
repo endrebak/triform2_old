@@ -8,7 +8,7 @@ setup(
     name="triform",
     packages=find_packages(),
     package_dir={'triform': 'triform'},
-    package_data={'triform': ['*.R']},
+    package_data={'triform': ['*.R', "scripts/chromsizes/*.chromsizes"]},
     # scripts=["bin/epic", "bin/epic-effective"],
     version=__version__,
     description=
@@ -31,4 +31,4 @@ setup(
         "Topic :: Scientific/Engineering"
     ],
     long_description=
-    "Improved sensitivity, specificity and control of false discovery ratesin ChIP-Seq peak finding.")
+    "Improved sensitivity, specificity and control of false discovery rates in ChIP-Seq peak finding.")

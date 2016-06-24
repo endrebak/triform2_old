@@ -1,13 +1,11 @@
 # from collections import defaultdict
 # from itertools import product
-# from sys import argv
 # import argparse
 # import os
 # from os.path import basename, join
 import pkg_resources
-from subprocess import check_output
-from io import BytesIO
 
+from sys import argv
 import pandas as pd
 from joblib import Parallel, delayed
 import rpy2
@@ -117,25 +115,6 @@ parser.add_argument('--version',
                     '-v',
                     action='version',
                     version='%(prog)s {}'.format(__version__))
-
-
-def bed_to_chromosomes(bed_file, chromosome, args):
-
-    # chromosomes = pkg_utils.
-
-    text_dfs = Parallel(n_jobs=args.number_cores)(
-        delayed(_bed_to_chromosomes)(bed_file, chromosome)
-        for chromosome in chromosomes)
-
-
-def _bed_to_chromosomes(bed_file, chromosome):
-    command = "{grep} -E '^{chromosome}\\b' {bed_file} | cut -f 1-3,6".format(
-        chromosome=chromosome,
-        bed_file=bed_file)
-    output = check_output(command, shell=True)
-
-    return BytesIO(output)
-
 
 if __name__ == '__main__':
     args = parser.parse_args()
