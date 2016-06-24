@@ -1,2 +1,2 @@
 source activate py27
-PYTHONPATH=../. py.test --color=yes -svv -f tests
+PYTHONPATH=../. py.test -m "unit" --color=yes -svv -f tests
