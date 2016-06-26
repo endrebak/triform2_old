@@ -7,6 +7,8 @@ from rpy2.robjects import r, pandas2ri
 ri2py = pandas2ri.ri2py
 from rpy2.robjects.packages import importr
 
+from triform.preprocess.make_ranged_data import _make_ranged_data
+
 
 @pytest.fixture
 def input_data():
@@ -34,31 +36,9 @@ chrY  11764681  11764706  -""")
                                 2: int32})
 
 
-def make_ranged_data(lines):
-    """Write description as command ending in a period."""
-
-    importr("GenomicRanges")
-
-    _make_ranged_data = r("""
-makeRangedData <- function(lines){
-  options(stringsAsFactors=FALSE)
-  con <- textConnection(lines)
-  dfr <- read.delim(con, colClasses=c("character", rep("integer",2), "character"), header=FALSE)
-  close(con)
-  # dfr <- read.delim(infile, header=FALSE,
-  #                   colClasses=c("character", rep("integer",2), "character"))
-  colnames(dfr) <- c("seqnames", "start", "end", "strand")
-  rd = makeGRangesFromDataFrame(dfr)
-  # rd <- as(dfr, "RangedData")
-  # save(rd, file=outfile)
-}
-""")
-    return _make_ranged_data(lines)
-
-
 @pytest.mark.unit
-def test_name(input_data, expected_result):
-    result = make_ranged_data(input_data)
+def test_make_ranged_data(input_data, expected_result):
+    result = _make_ranged_data(input_data)
 
     bc = importr("BiocGenerics")
     gidb = importr("GenomeInfoDb")

@@ -7,8 +7,9 @@ import pandas as pd
 __author__ = "Endre Bakken Stovner https://github.com/endrebak/"
 __license__ = "MIT"
 
-MockNamespace = namedtuple("MockNamespace", ["number_cores", "genome",
-                                             "treatment", "control"])
+MockNamespace = namedtuple("MockNamespace",
+                           ["number_cores", "genome", "read_width",
+                            "treatment", "control"])
 
 # egs = 2290813547.4  # this is the effective genome size used by the original sicer for hg19
 
@@ -26,7 +27,7 @@ MockNamespace = namedtuple("MockNamespace", ["number_cores", "genome",
 
 @pytest.fixture(scope="session")
 def args_tests():
-    return MockNamespace(2, "hg19", ["examples/test.bed"],
+    return MockNamespace(2, "hg19", 100, ["examples/test.bed"],
                          ["examples/control.bed"])
 
 

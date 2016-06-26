@@ -1,10 +1,7 @@
-# from collections import defaultdict
-# from itertools import product
-# import argparse
-# import os
-# from os.path import basename, join
 import pkg_resources
 
+import os
+import argparse
 from sys import argv
 import pandas as pd
 from joblib import Parallel, delayed
@@ -12,8 +9,9 @@ import rpy2
 from rpy2.robjects.packages import importr
 
 from triform.version import __version__
-from triform.preprocess import (make_ranged_data, make_chromosome_cover_file)
-from triform.chromosome import chromosome
+from triform.preprocess.make_ranged_data import make_ranged_data
+from triform.preprocess.bed_to_chromosome_dfs import bed_to_chromosome_dfs
+from triform.preprocess.make_chromosome_cover_files import make_chromosome_cover_files
 
 parser = argparse.ArgumentParser(
     description=
@@ -49,6 +47,13 @@ parser.add_argument(
     type=int,
     help=
     '''Number of cpus to use. Can use at most one per chromosome. Default: 1.''')
+
+parser.add_argument('--genome',
+                    '-g',
+                    required=False,
+                    default="hg19",
+                    type=str,
+                    help='''Genome version to use.''')
 
 parser.add_argument(
     '--min-z',
@@ -119,3 +124,14 @@ parser.add_argument('--version',
 if __name__ == '__main__':
     args = parser.parse_args()
     print("# triform2 " + " ".join(argv[1:]))
+
+    for file in args.treatment:
+        control_chromosome_dfs = bed_to_chromosome_dfs(file, args)
+        ranged_data = make_ranged_data(control_chromosome_dfs, args)
+        make_chromosome_cover_files(ranged_data, args)
+        print(file)
+        raise
+
+    for file in args.control:
+        treatment_chromosome_dfs = bed_to_chromosome_dfs(file, args)
+        ranged_data = make_ranged_data(treatment_chromosome_dfs, args)

@@ -1,4 +1,5 @@
 from subprocess import check_output
+from collections import OrderedDict
 
 from joblib import Parallel, delayed
 
@@ -13,7 +14,8 @@ def bed_to_chromosome_dfs(bed_file, args):
         delayed(_bed_to_chromosomes)(bed_file, chromosome)
         for chromosome in chromosomes)
 
-    text_dfs = {c: df for (c, df) in zip(chromosomes, text_dfs) if df != ""}
+    text_dfs = OrderedDict([(
+        c, df) for (c, df) in zip(chromosomes, text_dfs) if df != ""])
     return text_dfs
 
 

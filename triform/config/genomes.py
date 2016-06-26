@@ -1,4 +1,8 @@
+from collections import OrderedDict
+
 import pkg_resources
+
+from natsort import natsorted
 
 
 def get_genome_size_file(genome):
@@ -10,11 +14,10 @@ def create_genome_size_dict(genome):
     """Creates genome size dict from string containing data."""
 
     size_file = get_genome_size_file(genome)
-    size_lines = open(size_file).readlines()
+    size_lines = (l.split() for l in open(size_file).readlines())
 
-    size_dict = {}
-    for line in size_lines:
-        genome, length = line.split()
-        size_dict[genome] = int(length)
+    size_dict = OrderedDict()
+    for chromosome, length in natsorted(size_lines):
+        size_dict[chromosome] = int(length)
 
     return size_dict
