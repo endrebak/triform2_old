@@ -1,5 +1,6 @@
 import pkg_resources
 
+from collections import defaultdict, OrderedDict
 import os
 import argparse
 from sys import argv
@@ -121,17 +122,38 @@ parser.add_argument('--version',
                     action='version',
                     version='%(prog)s {}'.format(__version__))
 
+
+def preprocess(args):
+    """Return {chrom: list of chromcovers} map."""
+    treatment = _preprocess(args.treatment, args)
+    control = _preprocess(args.control, args)
+    return treatment, control
+
+
+def _preprocess(files, args):
+
+    chromosomes = set()
+
+    chromosome_covers = defaultdict(list)
+    for file in files:
+        control_chromosome_dfs = bed_to_chromosome_dfs(file, args)
+        ranged_data = make_ranged_data(control_chromosome_dfs, args)
+        chrcovers = make_chromosome_cover_files(ranged_data, args)
+        chromosome_covers[file].append(chrcovers)
+
+        chromosomes.update(set(chrcovers.keys()))
+
+    covers_per_chromosome = defaultdict(list)
+    for file, chrcovers_list in chromosome_covers.items():
+        for chrcovers in chrcovers_list:
+            for chromosome, cover in chrcovers.items():
+                covers_per_chromosome[chromosome].append(cover)
+
+    return covers_per_chromosome
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     print("# triform2 " + " ".join(argv[1:]))
 
-    for file in args.treatment:
-        control_chromosome_dfs = bed_to_chromosome_dfs(file, args)
-        ranged_data = make_ranged_data(control_chromosome_dfs, args)
-        make_chromosome_cover_files(ranged_data, args)
-        print(file)
-        raise
-
-    for file in args.control:
-        treatment_chromosome_dfs = bed_to_chromosome_dfs(file, args)
-        ranged_data = make_ranged_data(treatment_chromosome_dfs, args)
+    treatment, control = preprocess(args)

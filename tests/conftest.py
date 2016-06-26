@@ -9,7 +9,7 @@ __license__ = "MIT"
 
 MockNamespace = namedtuple("MockNamespace",
                            ["number_cores", "genome", "read_width",
-                            "treatment", "control"])
+                            "flank_distance", "treatment", "control"])
 
 # egs = 2290813547.4  # this is the effective genome size used by the original sicer for hg19
 
@@ -27,7 +27,7 @@ MockNamespace = namedtuple("MockNamespace",
 
 @pytest.fixture(scope="session")
 def args_tests():
-    return MockNamespace(2, "hg19", 100, ["examples/test.bed"],
+    return MockNamespace(2, "hg19", 100, 150, ["examples/test.bed"],
                          ["examples/control.bed"])
 
 
