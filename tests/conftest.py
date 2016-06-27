@@ -1,4 +1,5 @@
 import pytest
+from glob import glob
 
 from collections import namedtuple
 
@@ -34,3 +35,13 @@ def args_tests():
 @pytest.fixture(scope="session")
 def multiple_chromosomes():
     return pd.read_table("examples/multiple_chromos.bed", header=None)
+
+
+@pytest.fixture(scope="session")
+def run_length_encodings():
+    return {"FORWARD.CENTER": "examples/rle/forward_center.csv",
+            "FORWARD.LEFT": "examples/rle/forward_left.csv",
+            "FORWARD.RIGHT": "examples/rle/forward_right.csv",
+            "REVERSE.CENTER": "examples/rle/reverse_center.csv",
+            "REVERSE.LEFT": "examples/rle/reverse_left.csv",
+            "REVERSE.RIGHT": "examples/rle/reverse_right.csv"}

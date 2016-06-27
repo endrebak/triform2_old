@@ -562,6 +562,8 @@ test.init <- function(chr, filePath="./chrcovers") {
   print(CVG)
   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
   names(SIZES) <<- CVG.NAMES
+  save(CVG, file="CVG.RData")
+  stop()
 
   CHR <<- chr
 }

@@ -23,16 +23,21 @@ def _init(covers, is_input, args):
     LOCATION <- rep(LOCATIONS, 2)
 
     CVG <<- list()
-    SIZES <<- NULL
-    SIZES <<- c(SIZES, rep(unlist(chr$SIZE),ea=N.LOCS))
-    print(SIZES)
+    SIZES <<- rep(chr$SIZES, 3)
     cvgs <- chr$CVG		# coverage on each strand
 
     h = 1
     for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
       n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
+      print("n")
+      print(n)
       j <- ceiling(i/N.LOCS)    		# DIRECTION index
+      print("j")
+      print(j)
       cvg <- cvgs[[j]]        			# strand-specific coverage
+      print("cvg")
+      print(names(cvgs)[j])
+      print(cvg)
 
       if(is.input) {
           if(IS.CENTER[n]) {
@@ -52,6 +57,8 @@ def _init(covers, is_input, args):
     names(SIZES) <<- names(CVG)
 
     CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
+    # save(CVG, file="test_CVG.RData")
+    CVG
     }""")
 
     return init_function(covers, is_input, args.flank_distance)
