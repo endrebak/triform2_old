@@ -37,6 +37,7 @@ Now you should be able to run the triform example with
 source("triform-Ex.R")
 ```
 
-#### Paper
+#### Papers
 
-[The Triform algorithm: improved sensitivity and specificity in ChIP-Seq peak finding](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-13-176)
+* [The Triform algorithm: improved sensitivity and specificity in ChIP-Seq peak finding](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-13-176)
+* [ChIP analysis unravels an exceptionally wide distribution of DNA binding sites for the NtcA transcription factor in a heterocyst-forming cyanobacterium](http://bmcgenomics.biomedcentral.com/articles/10.1186/1471-2164-15-22)
