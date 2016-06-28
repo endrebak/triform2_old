@@ -16,8 +16,8 @@ def expected_result():
 
 
 @pytest.mark.unit
-def test_bed_to_chromosome_dfs(args_tests, expected_result):
-    result = bed_to_chromosome_dfs("examples/multiple_chromos.bed", args_tests)
+def test_bed_to_chromosome_dfs(args, expected_result):
+    result = bed_to_chromosome_dfs("examples/multiple_chromos.bed", args)
     print("result")
     for k, v in result.items():
         print(k)

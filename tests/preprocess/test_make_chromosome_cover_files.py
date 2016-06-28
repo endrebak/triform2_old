@@ -77,8 +77,8 @@ def expected_result(input_data):
 
 
 @pytest.mark.unit
-def test_make_chromosome_cover_files(input_data, expected_result, args_tests):
-    result = _make_chromosome_cover_files(input_data, args_tests)
+def test_make_chromosome_cover_files(input_data, expected_result, args):
+    result = _make_chromosome_cover_files(input_data, args)
 
     print("result")
     print(result)

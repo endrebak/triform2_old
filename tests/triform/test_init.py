@@ -67,10 +67,11 @@ def input_data():
     return create_input_data()
 
 
-@pytest.mark.current
-def test_init(input_data, expected_result, args_tests):
-    result = _init(input_data, False, args_tests)
+@pytest.mark.unit
+def test_init(input_data, expected_result, args):
+    result = _init(input_data, False, args)
 
+    # convert result to python for easier comparison
     names = list(r["names"](result))
     result_dict = {}
     for name in names:
@@ -82,6 +83,7 @@ def test_init(input_data, expected_result, args_tests):
         df.columns = ["values", "lengths"]
         result_dict[name] = df.astype(int)
 
+    # check that the results are as expected
     assert len(result_dict) == len(expected_result)
     assert set(result_dict.keys()) == set(expected_result.keys())
     for k in result_dict:
@@ -90,5 +92,3 @@ def test_init(input_data, expected_result, args_tests):
         print("expected_result[k]")
         print(expected_result[k])
         assert result_dict[k].equals(expected_result[k])
-
-    # assert result_dict == expected_result

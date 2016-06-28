@@ -222,6 +222,7 @@ test.chr <- function(chr,
 				PEAK.INFO[[type]][[direction]][[i]] <<- dfr
 			}
     }
+    # CENTER.CVG and PEAK.INFO is used below
 		direction <- "merged"
 		PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
 		PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
