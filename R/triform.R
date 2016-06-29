@@ -124,52 +124,6 @@ triform <- function(configPath="./config.yml", params=list()){
 ##' @param chrcoversPath Path to chromosome coverage files
 ##' @param outputFilePath Path for output file with peak predictions
 ##' @return
-
-## test.genome <- function(min.z=MIN.Z, min.shift=MIN.SHIFT, min.width=MIN.WIDTH,
-##                         chromosomes=CHRS,
-##                         chrcoversPath="./chrcovers",
-##                         outputFilePath="./Triform_output.csv") {  # Karls new version
-##   INFO <<- NULL
-##   for(chr in CHRS) {
-##     cat("\n\tProcessing",chr,"... "); flush.console()
-##     INFO <<- rbind(INFO, test.chr(
-## 	chr=chr,
-## 	min.z=min.z,
-## 	min.shift=min.shift,
-## 	min.width=min.width
-##     ))
-##     cat("done\n\t\tfound",N.PEAKS,"peaks")
-##   }
-##   print(INFO)
-##   INFO <<- INFO[order(-INFO$PEAK.NLP),]
-##   nlps <- unique(INFO$PEAK.NLP)
-##   sizes <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP == nlp))
-##   indices <- sapply(nlps,function(nlp) sum(INFO$PEAK.NLP >= nlp))
-
-##   nlrs <- mapply(function(nlp, j) {
-## 		m <- sum(INFO$PEAK.NLP >= nlp)	# Tarone modification for discrete nlp ## originally said, MAX.NLP, endre changed it to PEAK.NLP
-##     ## print("m")
-##     ## print(m)
-##     ## print("INFO$MAX.NLP")
-##     ## print(INFO$MAX.NLP)
-## 		b.y <- log10(sum((1:m)^-1))	# discrete Benjamini-Yekutieli offset
-## 		nls <- nlp + log10(j/m)		# discrete Benjamini-Hochberg adjustment
-## 		max(nls-b.y,0)			# discrete Benjamini-Yekutieli adjustment
-## 	}, nlp=nlps, j=indices)
-
-##   M <- length(nlrs)
-##   nlqs <- numeric(M)
-##   for(i in 1:M) nlqs[i] <- max(nlrs[i:M])	# step-up procedure
-
-##   nlqss <- unlist(mapply(function(nlq,size) rep(nlq,size), nlq=nlqs, size=sizes))
-##   INFO <<- cbind(QVAL=10^-nlqss, NLQ=nlqss, INFO)
-
-##   cat("\n\nSaving results ... "); flush.console()
-##   write.table(INFO,file=outputFilePath,col.names=NA,quote=FALSE,sep="\t")
-##   save(INFO,file="Triform.srf.info.RData")
-##   cat("Finished.\n\n")
-## }
-
 test.genome <- function(min.z=MIN.Z,
                         min.shift=MIN.SHIFT,
                         min.width=MIN.WIDTH,
@@ -220,128 +174,214 @@ test.chr <- function(chr,
   N.PEAKS <<- 0
 
   # target names only [1] "srf_huds_Gm12878" - why the loop?
-  for(type in TARGET.NAMES)  {
+
+
+	for(type in TARGET.NAMES)  {
     PEAKS[[type]] <<- list()
     PEAK.INFO[[type]] <<- list()
     CENTER.CVG[[type]] <<- list()
-    is.type <- grepl(type, CVG.NAMES)
+		is.type <- grepl(type, CVG.NAMES)
 
-    print("DIRECTIONS")
-    print(DIRECTIONS)
-    for(direction in DIRECTIONS){
-      # why three? type 1, type 2, type 3?
-      PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
-      PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
+		for(direction in DIRECTIONS){
+			PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
+			PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
 
-      if (any(IS.REP2)){
-        ## Use 2 replicates
-        formsList <- findForms2Replicates(direction, is.type, type,
-                                          min.z, min.width)
-      } else{
-        ## Use 1 replicate
-        formsList <- findForms1Replicate(direction, is.type, type,
-                                         min.z, min.width)
-      }
+			is.dir <- grepl(direction, CVG.NAMES)
+			ref <- (CVG[[CVG.NAMES[IS.INPUT & is.dir & IS.CENTER & IS.REP1]]] +
+							CVG[[CVG.NAMES[IS.INPUT & is.dir & IS.CENTER & IS.REP2]]])
 
-      # form 1 - 3 peaks
-      p1 <- formsList$p1
-      p2 <- formsList$p2
-      p3 <- formsList$p3
-      # The model-free test statistic for local enrichment, z4(x), is calculated according to (8)
-      p4 <- formsList$p4
-      ratio <- formsList$ratio
-      # sum of inputs
-      ref <- formsList$ref
-      zscores.list <- formsList$zscores.list
-      cvg <- formsList$cvg
-      rm(formsList)
+			surL1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.LEFT & IS.REP1]]]
+      surR1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.RIGHT & IS.REP1]]]
+      cvg1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.CENTER & IS.REP1]]]
 
+      surL2 <- CVG[[CVG.NAMES[is.type & is.dir & IS.LEFT & IS.REP2]]]
+      surR2 <- CVG[[CVG.NAMES[is.type & is.dir & IS.RIGHT & IS.REP2]]]
+      cvg2 <- CVG[[CVG.NAMES[is.type & is.dir & IS.CENTER & IS.REP2]]]
 
-      # why intersect p1 and p4; p1 form one peaks, p4 those that are enriched
-      p1 <- intersect(p1,p4)
-      ok <- (width(p1)>min.width)
-      p1 <- p1[ok]
+      surL <- surL1 + surL2
+      surR <- surR1 + surR2
+      cvg <- cvg1 + cvg2
+			CENTER.CVG[[type]][[direction]] <<- cvg
 
-      p2 <- intersect(p2,p4)
-      ok <- (width(p2)>min.width)
-      p2 <- p2[ok]
+			# Form-1 test with consistency check
+			signs1 <- sign(2*cvg1-surL1-surR1)
+			signs2 <- sign(2*cvg2-surL2-surR2)
+			ok <- (signs1==1)*(signs2==1)
+      zscores1 <- zscore(cvg,surL+surR,2) * ok
+      peaks1 <- slice(zscores1,lower=min.z)
+      peaks1 <- peaks1[width(peaks1)>min.width]
+			p1 <- as(peaks1,"IRanges")
 
-      p3 <- intersect(p3,p4)
-      ok <- (width(p3)>min.width)
-      p3 <- p3[ok]
+			# Form-2 test with consistency check
+			signs1 <- sign(cvg1-surL1)
+			signs2 <- sign(cvg2-surL2)
+			ok <- (signs1==1)*(signs2==1)
+      zscores2 <- zscore(cvg,surL) * ok
+      peaks2 <- slice(zscores2,lower=min.z)
+      peaks2 <- peaks2[width(peaks2)>min.width]
+			p2 <- as(peaks2,"IRanges")
 
-      peaks.list <- list(p1,p2,p3)
-      # mapply; Apply a Function to Multiple List or Vector Arguments
-      zviews.list <- mapply(function(x,y) Views(x,y),
-                            x=zscores.list, y=peaks.list)
-      # x =
-      ## numeric-Rle of length 57442693 with 13601 runs
-      ##   Lengths:           2819735                81 ...               197
-      ##   Values :                 0                 2 ...                 0
-      # y =
-      ## IRanges object with 312 ranges and 0 metadata columns:
-      ##             start       end     width
-      ##         <integer> <integer> <integer>
-      ##     [1]   2819736   2819816        81
-      ##     [2]   2834767   2834864        98
-      ##     [3]   2881597   2881690        94
-      # list of
-      ## Views on a 57442693-length Rle subject
+			# Form-3 test with consistency check
+			signs1 <- sign(cvg1-surR1)
+			signs2 <- sign(cvg2-surR2)
+			ok <- (signs1==1)*(signs2==1)
+      zscores3 <- zscore(cvg,surR) * ok
+      peaks3 <- slice(zscores3,lower=min.z)
+      peaks3 <- peaks3[width(peaks3)>min.width]
+			p3 <- as(peaks3,"IRanges")
 
-      ## views:
-      ##          start      end width
-      ##   [1]  2819736  2819816    81 [2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ...]
-      ##   [2]  2834767  2834864    98 [2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ...]
-      ##   [3]  2881597  2881690    94 [2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ...]
-      ##   [4]  3778332  3778354    23 [2.44949 2.44949 2.44949 2.44949 2.44949 ...]
-      ##   [5]  3779776  3779843    68 [2.449490 2.449490 2.449490 2.449490 ...]
+			# enrichment test with consistency check
+			ref.size <- (SIZES[IS.INPUT & is.dir & IS.CENTER & IS.REP1] +
+									 SIZES[IS.INPUT & is.dir & IS.CENTER & IS.REP2])
+			cvg1.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP1]
+			cvg2.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP2]
+			cvg.size <- cvg1.size + cvg2.size
+			ratio1 <- ref.size/cvg1.size
+			ratio2 <- ref.size/cvg2.size
+			ratio <- ref.size/cvg.size
 
-      maxz.list <- lapply(zviews.list, viewMaxs)
-      # [1]  2.000000  2.000000  2.000000  2.449490  2.828427  2.000000  2.000000
+			signs1 <- sign(ratio1*cvg1-ref)
+			signs2 <- sign(ratio2*cvg2-ref)
+			ok <- (signs1==1)*(signs2==1)
+			zscores4 <- zscore(cvg,ref,ratio) * ok
+      peaks4 <- slice(zscores4,lower=min.z)
+			peaks4 <- peaks4[width(peaks4)>min.width]
+			p4 <- as(peaks4,"IRanges")
 
-      # already in 2 for loops: filenames and directions
-      for(i in 1:3) {	# separate analyses of different peak forms
-        peaks <- peaks.list[[i]]
-        if(!length(peaks)) next # if empty next iteration
+			p1 <- intersect(p1,p4)
+			ok <- (width(p1)>min.width)
+			p1 <- p1[ok]
 
-        maxz <- maxz.list[[i]]
-        peak.nlps <- -pnorm(maxz, lower.tail=FALSE,log.p=TRUE)/log(10)
+			p2 <- intersect(p2,p4)
+			ok <- (width(p2)>min.width)
+			p2 <- p2[ok]
 
-        ## pnorm gives the distribution function
-        ## For each detected peak region, the peak position (PEAK.LOC) is reported as the midpoint of the range, and the peak significance (PEAK.NLP) is reported as the sum of the Negative Log10 (P) (NLP)
-        ## peak.nlps <- -pnorm(max.z, lower.tail=FALSE,log.p=TRUE)/log(10)
-        ## ## max.nlps <- -pnorm(max.z, low=FALSE, log=TRUE)/log(10)
+			p3 <- intersect(p3,p4)
+			ok <- (width(p3)>min.width)
+			p3 <- p3[ok]
 
-        peak.locs <- round((start(peaks)+end(peaks))/2)
-        peak.cvg <- cvg[peak.locs,drop=TRUE]
-        peak.ref <- ref[peak.locs,drop=TRUE]
-        ## ER(x) = (1 + r * C(x)) / (1 + B(x))
-        peak.enrich <- (1+ratio*peak.cvg)/(1+peak.ref)
+			peaks.list <- list(p1,p2,p3)
+			zscores.list <- list(zscores1,zscores2,zscores3)
+			zviews.list <- mapply(function(x,y) Views(x,y),
+														x=zscores.list, y=peaks.list)
+			maxz.list <- lapply(zviews.list, viewMaxs)
 
-        # check that the peak enrichment is high enough for type 1 peaks
-        # check that peak enrichment is higher than 3/8 of enriched
-        # the enrichment computed on per chromo basis
-        if(i==1) min.er <<- quantile(peak.enrich,MIN.QUANT)
-        ok <- (peak.enrich>min.er)
-        if(!any(ok)) next
+			for(i in 1:3) {	# separate analyses of different peak forms
+				peaks <- peaks.list[[i]]
+				if(!length(peaks)) next
 
-        peaks <- peaks[ok]
-        peak.locs <- peak.locs[ok]
-        peak.nlps <- peak.nlps[ok]
+				maxz <- maxz.list[[i]]
+				peak.nlps <- -pnorm(maxz, low=FALSE,log=TRUE)/log(10)
 
-        PEAKS[[type]][[direction]][[i]] <<- peaks
-        n.peaks <- length(peaks)
+				peak.locs <- round((start(peaks)+end(peaks))/2)
+				peak.cvg <- cvg[peak.locs,drop=TRUE]
+				peak.ref <- ref[peak.locs,drop=TRUE]
+				peak.enrich <- (1+ratio*peak.cvg)/(1+peak.ref)
 
+				if(i==1) min.er <<- quantile(peak.enrich,MIN.QUANT)
+				ok <- (peak.enrich>min.er)
+				if(!any(ok)) next
 
-        ## dfr <- data.frame(NLP=peak.nlps, MAX.NLP=max.nlps, LOC=peak.locs,
-        ##                   WIDTH=width(peaks), START=start(peaks), END=end(peaks),
-        ##                   CVG=peak.cvg, SURL=peak.surL, SURR=peak.surR, FORM=i)
-        dfr <- data.frame(PEAK.LOC=peak.locs,
-                          PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
-                          PEAK.START=start(peaks), PEAK.END=end(peaks))
-        PEAK.INFO[[type]][[direction]][[i]] <<- dfr
-      }
+				peaks <- peaks[ok]
+				peak.locs <- peak.locs[ok]
+				peak.nlps <- peak.nlps[ok]
+
+				peak.cvg <- peak.cvg[ok]
+        print(surL)
+				peak.surL <- surL[peak.locs,drop=TRUE]
+        print(peak.surL)
+        stop()
+				peak.surR <- surR[peak.locs,drop=TRUE]
+
+				PEAKS[[type]][[direction]][[i]] <<- peaks
+				n.peaks <- length(peaks)
+				dfr <- data.frame(PEAK.LOC=peak.locs, PEAK.CVG=peak.cvg,
+													PEAK.SURL=peak.surL, PEAK.SURR=peak.surR,
+													PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
+													PEAK.START=start(peaks), PEAK.END=end(peaks))
+				PEAK.INFO[[type]][[direction]][[i]] <<- dfr
+			}
     }
+
+  ## for(type in TARGET.NAMES)  {
+  ##   PEAKS[[type]] <<- list()
+  ##   PEAK.INFO[[type]] <<- list()
+  ##   CENTER.CVG[[type]] <<- list()
+  ##   is.type <- grepl(type, CVG.NAMES)
+
+
+
+  ##   print(DIRECTIONS)
+  ##   for(direction in DIRECTIONS){
+  ##     # why three? type 1, type 2, type 3?
+  ##     PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
+  ##     PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
+
+  ##     if (any(IS.REP2)){
+  ##       ## Use 2 replicates
+  ##       formsList <- findForms2Replicates(direction, is.type, type,
+  ##                                         min.z, min.width)
+  ##     } else{
+  ##       ## Use 1 replicate
+  ##       formsList <- findForms1Replicate(direction, is.type, type,
+  ##                                        min.z, min.width)
+  ##     }
+  ##     p1 <- formsList$p1
+  ##     p2 <- formsList$p2
+  ##     p3 <- formsList$p3
+  ##     p4 <- formsList$p4
+  ##     ratio <- formsList$ratio
+  ##     ref <- formsList$ref
+  ##     zscores.list <- formsList$zscores.list
+  ##     cvg <- formsList$cvg
+  ##     rm(formsList)
+
+
+  ##     p1 <- intersect(p1,p4)
+  ##     ok <- (width(p1)>min.width)
+  ##     p1 <- p1[ok]
+
+  ##     p2 <- intersect(p2,p4)
+  ##     ok <- (width(p2)>min.width)
+  ##     p2 <- p2[ok]
+
+  ##     p3 <- intersect(p3,p4)
+  ##     ok <- (width(p3)>min.width)
+  ##     p3 <- p3[ok]
+
+  ##     peaks.list <- list(p1,p2,p3)
+  ##     zviews.list <- mapply(function(x,y) Views(x,y),
+  ##                           x=zscores.list, y=peaks.list)
+  ##     maxz.list <- lapply(zviews.list, viewMaxs)
+
+  ##     for(i in 1:3) {	# separate analyses of different peak forms
+  ##       peaks <- peaks.list[[i]]
+  ##       if(!length(peaks)) next
+
+  ##       maxz <- maxz.list[[i]]
+  ##       peak.nlps <- -pnorm(maxz, lower.tail=FALSE,log.p=TRUE)/log(10)
+
+  ##       peak.locs <- round((start(peaks)+end(peaks))/2)
+  ##       peak.cvg <- cvg[peak.locs,drop=TRUE]
+  ##       peak.ref <- ref[peak.locs,drop=TRUE]
+  ##       peak.enrich <- (1+ratio*peak.cvg)/(1+peak.ref)
+
+  ##       if(i==1) min.er <<- quantile(peak.enrich,MIN.QUANT)
+  ##       ok <- (peak.enrich>min.er)
+  ##       if(!any(ok)) next
+
+  ##       peaks <- peaks[ok]
+  ##       peak.locs <- peak.locs[ok]
+  ##       peak.nlps <- peak.nlps[ok]
+
+  ##       PEAKS[[type]][[direction]][[i]] <<- peaks
+  ##       n.peaks <- length(peaks)
+  ##       dfr <- data.frame(PEAK.LOC=peak.locs,
+  ##                         PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
+  ##                         PEAK.START=start(peaks), PEAK.END=end(peaks))
+  ##       PEAK.INFO[[type]][[direction]][[i]] <<- dfr
+  ##     }
+  ##   }
     direction <- "merged"
     PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
     PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
@@ -351,28 +391,13 @@ test.chr <- function(chr,
     pos.cvg <- CENTER.CVG[[type]][[2]]
 
     for (i in 1:3) {
-      print(i)
-      print(type)
-      print("PEAKS[[type]][[1]][[i]]")
-      print(PEAKS[[type]][[1]][[i]])
-      print("PEAKS[[type]][[2]][[i]]")
-      print(PEAKS[[type]][[2]][[i]])
       p1 <- PEAKS[[type]][[1]][[i]]
       p2 <- PEAKS[[type]][[2]][[i]]
       if(!length(p1) | !length(p2)) next
 
-
       ov <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
-      ## rows in p1 and p2 that overlap
-      ##      [,1] [,2]
-      ## [1,]   17   16
-      ## [2,]   19   17
-      ## [3,]   20   18
       if(!nrow(ov)) next
 
-      print("ov[,1]")
-      print(ov[,1])
-      # check if any of the ov columns contains duplicates
       dup1 <- (ov[,1] %in% ov[duplicated(ov[,1]),1])
       dup2 <- (ov[,2] %in% ov[duplicated(ov[,2]),2])
       is.multi <- dup1 | dup2
@@ -416,7 +441,6 @@ test.chr <- function(chr,
       n.peaks <- length(peaks)
 
       dfr <- data.frame(PEAK.FORM=i, PEAK.NLP=peak.nlps,
-                        ## PEAK.MAX.NLP=max(peak.nlp), # this was added by me, Endre
                         PEAK.WIDTH=width(peaks), PEAK.LOC=peak.locs,
                         PEAK.START=start(peaks), PEAK.END=end(peaks))
 
@@ -455,8 +479,6 @@ test.chr <- function(chr,
                                         # merge overlapping Form-2 and Form-3 peaks into Form-1 peaks
   peak.info <- with(peak.info,peak.info[order(PEAK.START,PEAK.END),])
   rng <- with(peak.info,IRanges(start=PEAK.START,end=PEAK.END))
-
-  # if you get an error here, your iranges is probably not recent enough
   ov <- matrix(as.matrix(findOverlaps(rng,maxgap=1,drop.self=TRUE,drop.redundant=TRUE)),ncol=2)
   if(!!nrow(ov)) {
     peak.info[ov[,1],"PEAK.FORM"] <- 1
@@ -483,8 +505,8 @@ test.chr <- function(chr,
 ##' @return
 test.init <- function(chr, filePath="./chrcovers") {
   # Checking if CHR exists in the environment
-  ## if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
-  ## if(chr==CHR) return()
+  if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
+  if(chr==CHR) return()
 
   ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
   load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
@@ -512,10 +534,6 @@ test.init <- function(chr, filePath="./chrcovers") {
     ## ##   Lengths: 2709647      29      71      29 ...      56     100     161     100
     ## ##   Values :       0       1       2       1 ...       0       1       0       1
     cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
-    print(cvgs)
-    stop()
-    print("N.DIRLOCS")
-    print(N.DIRLOCS)
 
     for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
       print("i")
@@ -523,18 +541,11 @@ test.init <- function(chr, filePath="./chrcovers") {
       n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
       print("n")
       print(n)
-      print("N.LOCS")
-      print(N.LOCS)
       j <- ceiling(i/N.LOCS)    		# DIRECTION index
       print("j")
       print(j)
       cvg <- cvgs[[j]]        			# strand-specific coverage
-
-      print("N.LOCS")
-      print(N.LOCS)
-      print("cvg")
       print(cvg)
-      stop("in test.init")
 
       if(IS.CONTROL[n]) {
         if(IS.CENTER[n]) {
@@ -562,8 +573,6 @@ test.init <- function(chr, filePath="./chrcovers") {
   print(CVG)
   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
   names(SIZES) <<- CVG.NAMES
-  save(CVG, file="CVG.RData")
-  stop()
 
   CHR <<- chr
 }
@@ -579,7 +588,6 @@ test.init <- function(chr, filePath="./chrcovers") {
 zscore <- function(x,y,r=1) {  # r = size.y/size.x
   dif <- (r*x-y)
   zs <- dif/sqrt(r*(x+y))
-  # line below replaces all NaN with 0
   zs[!dif] <- 0
   zs
 }
@@ -644,7 +652,6 @@ findForms1Replicate <- function(direction, is.type, type,
 }
 
 
-# takes direction because it is called twice - once forward and once reverse
 findForms2Replicates <- function(direction, is.type, type,
                                  min.z, min.width){
   ## print(direction) # FORWARD or REVERSE
@@ -676,8 +683,8 @@ findForms2Replicates <- function(direction, is.type, type,
   # why only storing the center?
   CENTER.CVG[[type]][[direction]] <<- cvg
 
-  # Form-1 test with consistency check
-  # check that for each sample
+                                        # Form-1 test with consistency check
+  # w
   signs1 <- sign(2*cvg1-surL1-surR1)
   signs2 <- sign(2*cvg2-surL2-surR2)
   ok <- (signs1==1)*(signs2==1)
@@ -685,15 +692,8 @@ findForms2Replicates <- function(direction, is.type, type,
   peaks1 <- slice(zscores1,lower=min.z)
   peaks1 <- peaks1[width(peaks1)>min.width]
   p1 <- as(peaks1,"IRanges")
-#  all the peaks of type 1
-## IRanges object with 923 ranges and 0 metadata columns:
-##             start       end     width
-##         <integer> <integer> <integer>
-##     [1]   2819736   2819816        81
-##     ...
-##   [923]  57442402  57442440        39
 
-  # Form-2 test with consistency check
+                                        # Form-2 test with consistency check
   signs1 <- sign(cvg1-surL1)
   signs2 <- sign(cvg2-surL2)
   ok <- (signs1==1)*(signs2==1)
@@ -715,19 +715,9 @@ findForms2Replicates <- function(direction, is.type, type,
   ## ref.size <- (SIZES[IS.CONTROL & is.dir & IS.CENTER & IS.REP1] +
   ##              SIZES[IS.CONTROL & is.dir & IS.CENTER & IS.REP2])
   ref.size <- sum(SIZES[IS.CONTROL & is.dir & IS.CENTER])				# no need for replicate inputs
-  print("is.dir")
-  print(is.dir)
-  print("ref.size")
-  print(ref.size)
-  print("SIZES[IS.CONTROL & is.dir & IS.CENTER]")
-  print(SIZES[IS.CONTROL & is.dir & IS.CENTER])
   cvg1.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP1]
   cvg2.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP2]
-  print("cvg1.size")
-  print(cvg1.size)
-  print(length(cvg1.size))
   cvg.size <- cvg1.size + cvg2.size
-  # divide ref.size by cvg1 because so can compare one sample against both input
   ratio1 <- ref.size/cvg1.size
   ratio2 <- ref.size/cvg2.size
   ratio <- ref.size/cvg.size
