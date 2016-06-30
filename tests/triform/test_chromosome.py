@@ -187,10 +187,9 @@ function(x,y,r=1) {  # r = size.y/size.x
 
 def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
 
-    min_z = r["qnorm"](args.max_p, lower_tail=False)
+    results = defaultdict(dict)
 
-    PEAKS = defaultdict(dict)
-    PEAK_INFO = defaultdict(dict)
+    min_z = r["qnorm"](args.max_p, lower_tail=False)
 
     reverse_input = input_covers["reverse"]
     reverse_input = r["Reduce"]("+", reverse_input)
@@ -211,7 +210,7 @@ def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
     left = r["Reduce"]("+", list(left.values()))
     right = r["Reduce"]("+", list(right.values()))
 
-    center_coverage = center
+    results["cvg"] = cvg
     left_right = r["+"](left, right)
 
     ok1 = compute_ok1(reverse)
@@ -302,16 +301,6 @@ def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
         peak_left = subset_RS4(left, peak_locs, True)
         peak_right = subset_RS4(right, peak_locs, True)
 
-        PEAKS["reverse"][peak_type] = peaks
-        n_peaks = r["length"](peaks)
-
-        print(n_peaks, "n_peaks")
-        print(r["length"](peak_locs), "peak_locs")
-        print(r["length"](peak_cvg), "peak_cvg")
-        print(r["length"](peak_left), "peak_left")
-        print(r["length"](peak_right), "peak_right")
-        print(r["length"](peak_nlps), "peak_nlps")
-
         dfr = r["data.frame"](PEAK_LOC=peak_locs,
                               PEAK_CVG=peak_cvg,
                               PEAK_SURL=peak_left,
@@ -320,21 +309,19 @@ def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
                               PEAK_WIDTH=r["width"](peaks),
                               PEAK_START=r["start"](peaks),
                               PEAK_END=r["end"](peaks))
-        # must rename columns from _ to . then reorder
-        # print(r["names"](dfr))
-        # r["names"](dfr) = r["sub"]("\.", "")
-        # column_order = r(
-        #     'c("PEAK.LOC", "PEAK.CVG", "PEAK.SURL", "PEAK.SURR", "PEAK.NLP", "PEAK.WIDTH", "PEAK.START", "PEAK.END")')
-        # r["print"](column_order)
-        # dfr = r["subset"](dfr, True, select=column_order)
-        column_order_py = ['PEAK.LOC', 'PEAK.CVG', 'PEAK.SURL', 'PEAK.SURR',
-                           'PEAK.NLP', 'PEAK.WIDTH', 'PEAK.START', 'PEAK.END']
-        # dfr = dfr.rx2(column_order_py)
-        col_order = ['PEAK.LOC', 'PEAK.CVG', 'PEAK.SURL', 'PEAK.SURR',
-                     'PEAK.NLP', 'PEAK.WIDTH', 'PEAK.START', 'PEAK.END']
 
-        co = r["match"](col_order, r["names"](dfr))
-        print(co)
-        r["write.table"](dfr, "dfr_py", sep=" ")
-        PEAK_INFO["reverse"][peak_type] = dfr
-        # print(PEAK_INFO["reverse"][peak_type])
+        # reorder columns since rpy2 does not respect the col order above
+        rename_cols = r(
+            'function (df) { names(df) = sub("PEAK_", "PEAK.", names(df)); df}')
+        dfr = rename_cols(dfr)
+        column_order = r(
+            'c("PEAK.LOC", "PEAK.CVG", "PEAK.SURL", "PEAK.SURR", "PEAK.NLP", "PEAK.WIDTH", "PEAK.START", "PEAK.END")')
+        co = r["match"](column_order, r["names"](dfr))
+        dfr = dfr.rx(True, co)
+
+        results["nb_peaks"][peak_type] = r["length"](peaks)
+        results["peaks"][peak_type] = peaks
+        results["peak_info"][peak_type] = dfr
+
+    r["write.table"](results["peak_info"][1], "dfr_py", sep=" ")
+    return results

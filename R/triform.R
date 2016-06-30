@@ -336,9 +336,9 @@ test.chr <- function(chr,
 													PEAK.START=start(peaks), PEAK.END=end(peaks))
 				PEAK.INFO[[type]][[direction]][[i]] <<- dfr
         write.table(dfr, "dfr_r", sep=" ")
+        stop("Endre Endre Endre")
 			}
 
-    stop()
     }
 
   }
