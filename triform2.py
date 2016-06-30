@@ -57,13 +57,13 @@ parser.add_argument('--genome',
                     help='''Genome version to use.''')
 
 parser.add_argument(
-    '--min-z',
-    '-mz',
+    '--max-p',
+    '-mp',
     required=False,
     default=0.1,
     type=float,
     help=
-    '''Minimum upper-tail z-value (default corresponds to standard normal p = 0.1)''')
+    '''Used to calculate minimum upper-tail z-value (default corresponds to standard normal p = 0.1)''')
 
 parser.add_argument(
     '--min-shift',

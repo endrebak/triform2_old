@@ -10,7 +10,7 @@ __license__ = "MIT"
 
 MockNamespace = namedtuple("MockNamespace",
                            ["number_cores", "genome", "read_width",
-                            "flank_distance", "min_enrichment", "min_z",
+                            "flank_distance", "min_enrichment", "max_p",
                             "min_shift", "min_width", "treatment", "control"])
 # egs = 2290813547.4  # this is the effective genome size used by the original sicer for hg19
 
@@ -91,7 +91,7 @@ def sizes_rep2():
 
 @pytest.fixture(scope="session")
 def sizes_rep1_backgr():
-    return {"forward": 7798, "reverse": 7685}
+    return {"forward": 7685, "reverse": 7798}
 
 
 @pytest.fixture(scope="session")

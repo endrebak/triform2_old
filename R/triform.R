@@ -176,19 +176,24 @@ test.chr <- function(chr,
   # target names only [1] "srf_huds_Gm12878" - why the loop?
 
 
+  print(TARGET.NAMES)
 	for(type in TARGET.NAMES)  {
+    print("type")
+    print(type)
     PEAKS[[type]] <<- list()
     PEAK.INFO[[type]] <<- list()
     CENTER.CVG[[type]] <<- list()
 		is.type <- grepl(type, CVG.NAMES)
 
 		for(direction in DIRECTIONS){
+      print("direction")
+      print(direction)
 			PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
 			PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
 
 			is.dir <- grepl(direction, CVG.NAMES)
-			ref <- (CVG[[CVG.NAMES[IS.INPUT & is.dir & IS.CENTER & IS.REP1]]] +
-							CVG[[CVG.NAMES[IS.INPUT & is.dir & IS.CENTER & IS.REP2]]])
+			ref <- (CVG[[CVG.NAMES[IS.CONTROL & is.dir & IS.CENTER & IS.REP1]]] +
+							CVG[[CVG.NAMES[IS.CONTROL & is.dir & IS.CENTER & IS.REP2]]])
 
 			surL1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.LEFT & IS.REP1]]]
       surR1 <- CVG[[CVG.NAMES[is.type & is.dir & IS.RIGHT & IS.REP1]]]
@@ -209,6 +214,8 @@ test.chr <- function(chr,
 			ok <- (signs1==1)*(signs2==1)
       zscores1 <- zscore(cvg,surL+surR,2) * ok
       peaks1 <- slice(zscores1,lower=min.z)
+      ## write.table(peaks1, "peaks1_r")
+      subset1 = width(peaks1)>min.width
       peaks1 <- peaks1[width(peaks1)>min.width]
 			p1 <- as(peaks1,"IRanges")
 
@@ -231,20 +238,25 @@ test.chr <- function(chr,
 			p3 <- as(peaks3,"IRanges")
 
 			# enrichment test with consistency check
-			ref.size <- (SIZES[IS.INPUT & is.dir & IS.CENTER & IS.REP1] +
-									 SIZES[IS.INPUT & is.dir & IS.CENTER & IS.REP2])
+			ref.size <- (SIZES[IS.CONTROL & is.dir & IS.CENTER & IS.REP1] +
+									 SIZES[IS.CONTROL & is.dir & IS.CENTER & IS.REP2])
 			cvg1.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP1]
 			cvg2.size <- SIZES[is.type & is.dir & IS.CENTER & IS.REP2]
 			cvg.size <- cvg1.size + cvg2.size
 			ratio1 <- ref.size/cvg1.size
 			ratio2 <- ref.size/cvg2.size
+      print(ref.size)
+      print(cvg.size)
 			ratio <- ref.size/cvg.size
+      print(ratio)
 
 			signs1 <- sign(ratio1*cvg1-ref)
 			signs2 <- sign(ratio2*cvg2-ref)
 			ok <- (signs1==1)*(signs2==1)
+
 			zscores4 <- zscore(cvg,ref,ratio) * ok
       peaks4 <- slice(zscores4,lower=min.z)
+      ## write.table(peaks4, "peaks4_r")
 			peaks4 <- peaks4[width(peaks4)>min.width]
 			p4 <- as(peaks4,"IRanges")
 
@@ -264,18 +276,25 @@ test.chr <- function(chr,
 			zscores.list <- list(zscores1,zscores2,zscores3)
 			zviews.list <- mapply(function(x,y) Views(x,y),
 														x=zscores.list, y=peaks.list)
+      print(typeof(zviews.list))
 			maxz.list <- lapply(zviews.list, viewMaxs)
 
 			for(i in 1:3) {	# separate analyses of different peak forms
+        print("i")
+        print(i)
 				peaks <- peaks.list[[i]]
+
 				if(!length(peaks)) next
 
 				maxz <- maxz.list[[i]]
 				peak.nlps <- -pnorm(maxz, low=FALSE,log=TRUE)/log(10)
 
+        start.peaks = start(peaks)
+        end.peaks = end(peaks)
 				peak.locs <- round((start(peaks)+end(peaks))/2)
 				peak.cvg <- cvg[peak.locs,drop=TRUE]
 				peak.ref <- ref[peak.locs,drop=TRUE]
+
 				peak.enrich <- (1+ratio*peak.cvg)/(1+peak.ref)
 
 				if(i==1) min.er <<- quantile(peak.enrich,MIN.QUANT)
@@ -284,13 +303,29 @@ test.chr <- function(chr,
 
 				peaks <- peaks[ok]
 				peak.locs <- peak.locs[ok]
+        write.table(peak.locs, "peak_locs_r")
 				peak.nlps <- peak.nlps[ok]
 
+        print("length(ok)")
+        print(length(ok))
+
+        print("length(peak.locs)")
+        print(length(peak.locs))
+
+
+        print("length(peak.nlps)")
+        print(length(peak.nlps))
+
 				peak.cvg <- peak.cvg[ok]
+        print("surL")
         print(surL)
+        print("length(surL)")
+        print(length(surL))
 				peak.surL <- surL[peak.locs,drop=TRUE]
+        print("peak.surL")
         print(peak.surL)
-        stop()
+        print("length(peak.surL)")
+        print(length(peak.surL))
 				peak.surR <- surR[peak.locs,drop=TRUE]
 
 				PEAKS[[type]][[direction]][[i]] <<- peaks
@@ -300,9 +335,14 @@ test.chr <- function(chr,
 													PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
 													PEAK.START=start(peaks), PEAK.END=end(peaks))
 				PEAK.INFO[[type]][[direction]][[i]] <<- dfr
+        write.table(dfr, "dfr_r", sep=" ")
 			}
+
+    stop()
     }
 
+  }
+}
   ## for(type in TARGET.NAMES)  {
   ##   PEAKS[[type]] <<- list()
   ##   PEAK.INFO[[type]] <<- list()
@@ -382,200 +422,200 @@ test.chr <- function(chr,
   ##       PEAK.INFO[[type]][[direction]][[i]] <<- dfr
   ##     }
   ##   }
-    direction <- "merged"
-    PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
-    PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
-    PEAK.INFO[[type]][["regions"]] <<- list(NULL,NULL,NULL)
+##     direction <- "merged"
+##     PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
+##     PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
+##     PEAK.INFO[[type]][["regions"]] <<- list(NULL,NULL,NULL)
 
-    neg.cvg <- CENTER.CVG[[type]][[1]]
-    pos.cvg <- CENTER.CVG[[type]][[2]]
+##     neg.cvg <- CENTER.CVG[[type]][[1]]
+##     pos.cvg <- CENTER.CVG[[type]][[2]]
 
-    for (i in 1:3) {
-      p1 <- PEAKS[[type]][[1]][[i]]
-      p2 <- PEAKS[[type]][[2]][[i]]
-      if(!length(p1) | !length(p2)) next
+##     for (i in 1:3) {
+##       p1 <- PEAKS[[type]][[1]][[i]]
+##       p2 <- PEAKS[[type]][[2]][[i]]
+##       if(!length(p1) | !length(p2)) next
 
-      ov <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
-      if(!nrow(ov)) next
+##       ov <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
+##       if(!nrow(ov)) next
 
-      dup1 <- (ov[,1] %in% ov[duplicated(ov[,1]),1])
-      dup2 <- (ov[,2] %in% ov[duplicated(ov[,2]),2])
-      is.multi <- dup1 | dup2
-      if(all(is.multi)) next
-      ov <- ov[!is.multi,,drop=FALSE]
+##       dup1 <- (ov[,1] %in% ov[duplicated(ov[,1]),1])
+##       dup2 <- (ov[,2] %in% ov[duplicated(ov[,2]),2])
+##       is.multi <- dup1 | dup2
+##       if(all(is.multi)) next
+##       ov <- ov[!is.multi,,drop=FALSE]
 
-      p1 <- p1[1:length(p1) %in% ov[,1]]
-      p2 <- p2[1:length(p2) %in% ov[,2]]
-      peaks <- IRanges(start=pmin(start(p1),start(p2)),
-                       end=pmax(end(p1),end(p2)))
+##       p1 <- p1[1:length(p1) %in% ov[,1]]
+##       p2 <- p2[1:length(p2) %in% ov[,2]]
+##       peaks <- IRanges(start=pmin(start(p1),start(p2)),
+##                        end=pmax(end(p1),end(p2)))
 
-      switch(i,
-             ranges <- IRanges(start=start(peaks)-FLANK.DELTA,
-                               end=end(peaks)+FLANK.DELTA),
-             ranges <- IRanges(start=start(peaks)-FLANK.DELTA,
-                               end=end(peaks)),
-             ranges <- IRanges(start=start(peaks),
-                               end=end(peaks)+FLANK.DELTA))
+##       switch(i,
+##              ranges <- IRanges(start=start(peaks)-FLANK.DELTA,
+##                                end=end(peaks)+FLANK.DELTA),
+##              ranges <- IRanges(start=start(peaks)-FLANK.DELTA,
+##                                end=end(peaks)),
+##              ranges <- IRanges(start=start(peaks),
+##                                end=end(peaks)+FLANK.DELTA))
 
-      neg.peak.cvg <- viewApply(Views(neg.cvg,ranges),as.numeric)
-      pos.peak.cvg <- viewApply(Views(pos.cvg,ranges),as.numeric)
+##       neg.peak.cvg <- viewApply(Views(neg.cvg,ranges),as.numeric)
+##       pos.peak.cvg <- viewApply(Views(pos.cvg,ranges),as.numeric)
 
-      lags <- mapply(function(x,y) {
-        cc=ccf(x,y,lag.max=100,plot=FALSE)
-        with(cc,lag[which.max(acf)])
-      }, x=neg.peak.cvg, y=pos.peak.cvg)
+##       lags <- mapply(function(x,y) {
+##         cc=ccf(x,y,lag.max=100,plot=FALSE)
+##         with(cc,lag[which.max(acf)])
+##       }, x=neg.peak.cvg, y=pos.peak.cvg)
 
-      ok <- (lags > min.shift)
-      if(!any(ok)) next
-      ov <- ov[ok,,drop=FALSE]
-      peaks <- peaks[ok]
+##       ok <- (lags > min.shift)
+##       if(!any(ok)) next
+##       ov <- ov[ok,,drop=FALSE]
+##       peaks <- peaks[ok]
 
-      if(i==1) type.delta <<- round(median(lags[ok]))
+##       if(i==1) type.delta <<- round(median(lags[ok]))
 
-      info1 <- PEAK.INFO[[type]][[1]][[i]][ov[,1],]
-      info2 <- PEAK.INFO[[type]][[2]][[i]][ov[,2],]
-      peak.locs <- round((info1$PEAK.LOC + info2$PEAK.LOC)/2)
-      peak.nlps <- info1$PEAK.NLP + info2$PEAK.NLP
+##       info1 <- PEAK.INFO[[type]][[1]][[i]][ov[,1],]
+##       info2 <- PEAK.INFO[[type]][[2]][[i]][ov[,2],]
+##       peak.locs <- round((info1$PEAK.LOC + info2$PEAK.LOC)/2)
+##       peak.nlps <- info1$PEAK.NLP + info2$PEAK.NLP
 
-      PEAKS[[type]][[direction]][[i]] <<- peaks
-      n.peaks <- length(peaks)
+##       PEAKS[[type]][[direction]][[i]] <<- peaks
+##       n.peaks <- length(peaks)
 
-      dfr <- data.frame(PEAK.FORM=i, PEAK.NLP=peak.nlps,
-                        PEAK.WIDTH=width(peaks), PEAK.LOC=peak.locs,
-                        PEAK.START=start(peaks), PEAK.END=end(peaks))
+##       dfr <- data.frame(PEAK.FORM=i, PEAK.NLP=peak.nlps,
+##                         PEAK.WIDTH=width(peaks), PEAK.LOC=peak.locs,
+##                         PEAK.START=start(peaks), PEAK.END=end(peaks))
 
-      rownames(dfr) <- with(dfr,sprintf("%s:%d-%d:%d",CHR,PEAK.START,PEAK.END,PEAK.FORM))
-      PEAK.INFO[[type]][[direction]][[i]] <<- dfr
-      N.PEAKS <<- N.PEAKS + n.peaks
-    }
-  }
-  if(!N.PEAKS) return()
+##       rownames(dfr) <- with(dfr,sprintf("%s:%d-%d:%d",CHR,PEAK.START,PEAK.END,PEAK.FORM))
+##       PEAK.INFO[[type]][[direction]][[i]] <<- dfr
+##       N.PEAKS <<- N.PEAKS + n.peaks
+##     }
+##   }
+##   if(!N.PEAKS) return()
 
-                                        # exclude redundant Form-2 and Form-3 peaks
-  p1 <- PEAKS[[type]][[direction]][[1]]
-  p2 <- PEAKS[[type]][[direction]][[2]]
-  p3 <- PEAKS[[type]][[direction]][[3]]
-  peak.info <- PEAK.INFO[[type]][[direction]][[1]]
+##                                         # exclude redundant Form-2 and Form-3 peaks
+##   p1 <- PEAKS[[type]][[direction]][[1]]
+##   p2 <- PEAKS[[type]][[direction]][[2]]
+##   p3 <- PEAKS[[type]][[direction]][[3]]
+##   peak.info <- PEAK.INFO[[type]][[direction]][[1]]
 
-  ov12 <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
-  if(!!nrow(ov12)) {
-    ex2 <- (1:length(p2) %in% ov12[,2])
-    p2 <- p2[!ex2]
-    PEAKS[[type]][[direction]][[2]] <<- p2
-    info <- PEAK.INFO[[type]][[direction]][[2]][!ex2,,drop=FALSE]
-    PEAK.INFO[[type]][[direction]][[2]] <<- info
-    peak.info <- rbind(peak.info,info)
-  }
-  ov13 <- matrix(as.matrix(findOverlaps(p1,p3)),ncol=2)
-  if(!!nrow(ov13)) {
-    ex3 <- (1:length(p3) %in% ov13[,2])
-    p3 <- p3[!ex3]
-    PEAKS[[type]][[direction]][[3]] <<- p3
-    info <- PEAK.INFO[[type]][[direction]][[3]][!ex3,,drop=FALSE]
-    PEAK.INFO[[type]][[direction]][[3]] <<- info
-    peak.info <- rbind(peak.info,info)
-  }
+##   ov12 <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
+##   if(!!nrow(ov12)) {
+##     ex2 <- (1:length(p2) %in% ov12[,2])
+##     p2 <- p2[!ex2]
+##     PEAKS[[type]][[direction]][[2]] <<- p2
+##     info <- PEAK.INFO[[type]][[direction]][[2]][!ex2,,drop=FALSE]
+##     PEAK.INFO[[type]][[direction]][[2]] <<- info
+##     peak.info <- rbind(peak.info,info)
+##   }
+##   ov13 <- matrix(as.matrix(findOverlaps(p1,p3)),ncol=2)
+##   if(!!nrow(ov13)) {
+##     ex3 <- (1:length(p3) %in% ov13[,2])
+##     p3 <- p3[!ex3]
+##     PEAKS[[type]][[direction]][[3]] <<- p3
+##     info <- PEAK.INFO[[type]][[direction]][[3]][!ex3,,drop=FALSE]
+##     PEAK.INFO[[type]][[direction]][[3]] <<- info
+##     peak.info <- rbind(peak.info,info)
+##   }
 
-                                        # merge overlapping Form-2 and Form-3 peaks into Form-1 peaks
-  peak.info <- with(peak.info,peak.info[order(PEAK.START,PEAK.END),])
-  rng <- with(peak.info,IRanges(start=PEAK.START,end=PEAK.END))
-  ov <- matrix(as.matrix(findOverlaps(rng,maxgap=1,drop.self=TRUE,drop.redundant=TRUE)),ncol=2)
-  if(!!nrow(ov)) {
-    peak.info[ov[,1],"PEAK.FORM"] <- 1
-    peak.info[ov[,1],"PEAK.LOC"] <- round((peak.info[ov[,1],"PEAK.LOC"] + peak.info[ov[,2],"PEAK.LOC"])/2)
-    peak.info[ov[,1],"PEAK.NLP"] <- peak.info[ov[,1],"PEAK.NLP"] + peak.info[ov[,2],"PEAK.NLP"]
-    peak.info[ov[,1],"PEAK.START"] <- pmin(peak.info[ov[,1],"PEAK.START"],peak.info[ov[,2],"PEAK.START"])
-    peak.info[ov[,1],"PEAK.END"] <- pmax(peak.info[ov[,1],"PEAK.END"],peak.info[ov[,2],"PEAK.END"])
-    peak.info[ov[,1],"PEAK.WIDTH"] <- 1 + peak.info[ov[,1],"PEAK.END"] - peak.info[ov[,1],"PEAK.START"]
-    peak.info <- peak.info[-ov[,2],]
-  }
+##                                         # merge overlapping Form-2 and Form-3 peaks into Form-1 peaks
+##   peak.info <- with(peak.info,peak.info[order(PEAK.START,PEAK.END),])
+##   rng <- with(peak.info,IRanges(start=PEAK.START,end=PEAK.END))
+##   ov <- matrix(as.matrix(findOverlaps(rng,maxgap=1,drop.self=TRUE,drop.redundant=TRUE)),ncol=2)
+##   if(!!nrow(ov)) {
+##     peak.info[ov[,1],"PEAK.FORM"] <- 1
+##     peak.info[ov[,1],"PEAK.LOC"] <- round((peak.info[ov[,1],"PEAK.LOC"] + peak.info[ov[,2],"PEAK.LOC"])/2)
+##     peak.info[ov[,1],"PEAK.NLP"] <- peak.info[ov[,1],"PEAK.NLP"] + peak.info[ov[,2],"PEAK.NLP"]
+##     peak.info[ov[,1],"PEAK.START"] <- pmin(peak.info[ov[,1],"PEAK.START"],peak.info[ov[,2],"PEAK.START"])
+##     peak.info[ov[,1],"PEAK.END"] <- pmax(peak.info[ov[,1],"PEAK.END"],peak.info[ov[,2],"PEAK.END"])
+##     peak.info[ov[,1],"PEAK.WIDTH"] <- 1 + peak.info[ov[,1],"PEAK.END"] - peak.info[ov[,1],"PEAK.START"]
+##     peak.info <- peak.info[-ov[,2],]
+##   }
 
-  N.PEAKS <<- nrow(peak.info)
-  peak.info
-}
+##   N.PEAKS <<- nrow(peak.info)
+##   peak.info
+## }
 
 
 
-##' Creates sample/direction/location-specific coverage data for a chromosome
-##'
-##' Stores result in global variable CVG
-##' @title test.init
-##' @param chr The chromosome
-##' @param filePath The path to the chromosome coverage file
-##' @return
-test.init <- function(chr, filePath="./chrcovers") {
-  # Checking if CHR exists in the environment
-  if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
-  if(chr==CHR) return()
+## ##' Creates sample/direction/location-specific coverage data for a chromosome
+## ##'
+## ##' Stores result in global variable CVG
+## ##' @title test.init
+## ##' @param chr The chromosome
+## ##' @param filePath The path to the chromosome coverage file
+## ##' @return
+## test.init <- function(chr, filePath="./chrcovers") {
+##   # Checking if CHR exists in the environment
+##   if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
+##   if(chr==CHR) return()
 
-  ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
-  load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
+##   ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
+##   load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
 
-  CVG <<- list()
-  SIZES <<- NULL
-  # N.TYPES is the number of files
-  for(h in 1:N.TYPES) {       			# TYPE index
-    type <- SUMCVG.NAMES[h] # "srf_huds_Gm12878_rep1"
-    # what is c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS)), the below?
-    #    -    -    -    +    +    +
-    # 8688 8688 8688 8986 8986 8986
-    # each file has chromosome coverage - what does it consists of?
-    # length 100 regions and the regions inbetween them
-    print(chrcovers[[type]])
-    SIZES <<- c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS))
+##   CVG <<- list()
+##   SIZES <<- NULL
+##   # N.TYPES is the number of files
+##   for(h in 1:N.TYPES) {       			# TYPE index
+##     type <- SUMCVG.NAMES[h] # "srf_huds_Gm12878_rep1"
+##     # what is c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS)), the below?
+##     #    -    -    -    +    +    +
+##     # 8688 8688 8688 8986 8986 8986
+##     # each file has chromosome coverage - what does it consists of?
+##     # length 100 regions and the regions inbetween them
+##     print(chrcovers[[type]])
+##     SIZES <<- c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS))
 
-    ## RleList of length 2
-    ## $`-`
-    ## integer-Rle of length 57442690 with 12472 runs
-    ##   Lengths: 2709676     100   31062     100 ...     232     100      94     100
-    ##   Values :       0       1       0       1 ...       0       1       0       1
-    ## ## $`+`
-    ## ## integer-Rle of length 57442498 with 12854 runs
-    ## ##   Lengths: 2709647      29      71      29 ...      56     100     161     100
-    ## ##   Values :       0       1       2       1 ...       0       1       0       1
-    cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
+##     ## RleList of length 2
+##     ## $`-`
+##     ## integer-Rle of length 57442690 with 12472 runs
+##     ##   Lengths: 2709676     100   31062     100 ...     232     100      94     100
+##     ##   Values :       0       1       0       1 ...       0       1       0       1
+##     ## ## $`+`
+##     ## ## integer-Rle of length 57442498 with 12854 runs
+##     ## ##   Lengths: 2709647      29      71      29 ...      56     100     161     100
+##     ## ##   Values :       0       1       2       1 ...       0       1       0       1
+##     cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
 
-    for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
-      print("i")
-      print(i)
-      n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
-      print("n")
-      print(n)
-      j <- ceiling(i/N.LOCS)    		# DIRECTION index
-      print("j")
-      print(j)
-      cvg <- cvgs[[j]]        			# strand-specific coverage
-      print(cvg)
+##     for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
+##       print("i")
+##       print(i)
+##       n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
+##       print("n")
+##       print(n)
+##       j <- ceiling(i/N.LOCS)    		# DIRECTION index
+##       print("j")
+##       print(j)
+##       cvg <- cvgs[[j]]        			# strand-specific coverage
+##       print(cvg)
 
-      if(IS.CONTROL[n]) {
-        if(IS.CENTER[n]) {
-          CVG[[n]] <<- cvg
-        }
-        next                                    # no need for flanking input coverage
-      }
+##       if(IS.CONTROL[n]) {
+##         if(IS.CENTER[n]) {
+##           CVG[[n]] <<- cvg
+##         }
+##         next                                    # no need for flanking input coverage
+##       }
 
-      # This decides whether left, centre or right flank
-      # N.
-      switch(1 + (i-1)%%N.LOCS,			# LOCATION index
-             CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])), # strand-specific coverage on left flank
-             CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD), # strand-specific coverage on right flank
-             CVG[[n]] <<- cvg     # strand-specific coverage on center
-             )
-      print(CVG[[1 + (i-1)%%N.LOCS]])
-    }
-  }
-  # loop over "srf_huds_Gm12878_rep1" etc done
-  # have collected coverage data for each strand
-  # what is it now used for?
+##       # This decides whether left, centre or right flank
+##       # N.
+##       switch(1 + (i-1)%%N.LOCS,			# LOCATION index
+##              CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])), # strand-specific coverage on left flank
+##              CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD), # strand-specific coverage on right flank
+##              CVG[[n]] <<- cvg     # strand-specific coverage on center
+##              )
+##       print(CVG[[1 + (i-1)%%N.LOCS]])
+##     }
+##   }
+##   # loop over "srf_huds_Gm12878_rep1" etc done
+##   # have collected coverage data for each strand
+##   # what is it now used for?
 
-  names(CVG) <<- CVG.NAMES
-  maxlen <- max(sapply(CVG,length))
-  print(CVG)
-  CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
-  names(SIZES) <<- CVG.NAMES
+##   names(CVG) <<- CVG.NAMES
+##   maxlen <- max(sapply(CVG,length))
+##   print(CVG)
+##   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
+##   names(SIZES) <<- CVG.NAMES
 
-  CHR <<- chr
-}
+##   CHR <<- chr
+## }
 
 
 ##' Calculates Z score

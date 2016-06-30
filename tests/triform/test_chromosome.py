@@ -69,8 +69,6 @@ def chip_data(run_length_encodings_full_rep1, run_length_encodings_full_rep2):
 
 @pytest.fixture
 def chip_sizes(sizes_rep1, sizes_rep2):
-    print(sizes_rep2.keys())
-    print(sizes_rep1.keys())
     d = defaultdict(dict)
     d["reverse"]["rep1"] = sizes_rep1["reverse"]
     d["forward"]["rep1"] = sizes_rep1["forward"]
@@ -98,6 +96,7 @@ def expected_result():
 def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
                     expected_result):
 
+    # r["print"](r["sessionInfo"]())
     result = chromosome(chip_data, input_data, chip_sizes, input_sizes, args)
     assert 0  # result == expected_result
 
@@ -188,22 +187,25 @@ function(x,y,r=1) {  # r = size.y/size.x
 
 def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
 
+    min_z = r["qnorm"](args.max_p, lower_tail=False)
+
     PEAKS = defaultdict(dict)
     PEAK_INFO = defaultdict(dict)
 
-    forward_input = input_covers["forward"]
-    forward_input = r["Reduce"]("+", forward_input)
-    input_size = sum(input_sizes["forward"].values())
-    chip_sizes = chip_sizes["forward"]
+    reverse_input = input_covers["reverse"]
+    reverse_input = r["Reduce"]("+", reverse_input)
+    input_size = sum(input_sizes["reverse"].values())
+    chip_sizes = chip_sizes["reverse"]
 
     ratios = compute_ratios(chip_sizes, input_size)
+
     ratio = input_size / sum(chip_sizes.values())
 
-    forward = chip_covers["forward"]
+    reverse = chip_covers["reverse"]
 
-    center = collect_key(forward, "center")
-    left = collect_key(forward, "left")
-    right = collect_key(forward, "right")
+    center = collect_key(reverse, "center")
+    left = collect_key(reverse, "left")
+    right = collect_key(reverse, "right")
 
     cvg = r["Reduce"]("+", list(center.values()))
     left = r["Reduce"]("+", list(left.values()))
@@ -212,20 +214,20 @@ def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
     center_coverage = center
     left_right = r["+"](left, right)
 
-    ok1 = compute_ok1(forward)
-    ok2 = compute_ok23(forward, 2)
-    ok3 = compute_ok23(forward, 3)
-    ok4 = compute_ok4(ratios, center, forward_input)
+    ok1 = compute_ok1(reverse)
+    ok2 = compute_ok23(reverse, 2)
+    ok3 = compute_ok23(reverse, 3)
+    ok4 = compute_ok4(ratios, center, reverse_input)
 
     zscores1 = r["*"](ok1, zscores(cvg, left_right, 2))
     zscores2 = r["*"](ok2, zscores(cvg, left))
     zscores3 = r["*"](ok3, zscores(cvg, right))
-    zscores4 = r["*"](ok4, zscores(cvg, forward_input, ratio))
+    zscores4 = r["*"](ok4, zscores(cvg, reverse_input, ratio))
 
-    peaks1 = r["slice"](zscores1, lower=args.min_z)
-    peaks2 = r["slice"](zscores2, lower=args.min_z)
-    peaks3 = r["slice"](zscores3, lower=args.min_z)
-    peaks4 = r["slice"](zscores4, lower=args.min_z)
+    peaks1 = r["slice"](zscores1, lower=min_z)
+    peaks2 = r["slice"](zscores2, lower=min_z)
+    peaks3 = r["slice"](zscores3, lower=min_z)
+    peaks4 = r["slice"](zscores4, lower=min_z)
 
     subset1 = r[">"](r["width"](peaks1), args.min_width)
     subset2 = r[">"](r["width"](peaks2), args.min_width)
@@ -260,9 +262,7 @@ def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
     views_func = r("function(x,y) Views(x,y)")
 
     zviews_list = r["mapply"](views_func, x=_zscores, y=_peaks)
-    print(zviews_list, "zviews_list", type(zviews_list))
     maxz_list = r["lapply"](zviews_list, r["viewMaxs"])
-    print(maxz_list, "maxz_list", type(maxz_list))
 
     for peak_type, peaks in enumerate(_peaks, 1):
         maxz = maxz_list.rx2(peak_type)
@@ -270,10 +270,14 @@ def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
                                              lower_tail=False,
                                              log_p=True),
                                   np.log(10)))
-        peak_locs = r["round"](r["/"](r["+"](r["start"](peaks), (r["end"](
-            peaks))), 2))
+        start_peaks = r["start"](peaks)
+        end_peaks = r["end"](peaks)
+        sum_starts_ends = r["+"](start_peaks, end_peaks)
+        peak_locs = r["/"](sum_starts_ends, 2)
+        peak_locs = r["round"](peak_locs)
+
         peak_cvg = subset_RS4(cvg, peak_locs, True)
-        peak_ref = subset_RS4(forward_input, peak_locs, True)
+        peak_ref = subset_RS4(reverse_input, peak_locs, True)
 
         peak_enrich_cvg = r["+"](1, r["*"](ratio, peak_cvg))
         peak_enrich_ref = r["+"](1, peak_ref)
@@ -289,22 +293,48 @@ def chromosome(chip_covers, input_covers, chip_sizes, input_sizes, args):
         if not nb_ok:
             continue
 
-        peak_locs = subset_RS4(peaks, ok)
+        peaks = subset_RS4(peaks, ok)
+        peak_locs = subset_RS4(peak_locs, ok)
+
         peak_nlps = subset_RS4(peak_nlps, ok)
         peak_cvg = subset_RS4(peak_cvg, ok)
 
         peak_left = subset_RS4(left, peak_locs, True)
         peak_right = subset_RS4(right, peak_locs, True)
 
-        PEAKS["forward"][peak_type] = peaks
+        PEAKS["reverse"][peak_type] = peaks
         n_peaks = r["length"](peaks)
+
         print(n_peaks, "n_peaks")
         print(r["length"](peak_locs), "peak_locs")
         print(r["length"](peak_cvg), "peak_cvg")
         print(r["length"](peak_left), "peak_left")
         print(r["length"](peak_right), "peak_right")
         print(r["length"](peak_nlps), "peak_nlps")
-        PEAK_INFO["forward"][peak_type] = r["data.frame"](PEAK_LOC=peak_locs,
-                                                          PEAK_CVG=peak_cvg,
-                                                          PEAK_SURL=peak_left)
-        print(PEAK_INFO["forward"][peak_type])
+
+        dfr = r["data.frame"](PEAK_LOC=peak_locs,
+                              PEAK_CVG=peak_cvg,
+                              PEAK_SURL=peak_left,
+                              PEAK_SURR=peak_right,
+                              PEAK_NLP=r["round"](peak_nlps, 3),
+                              PEAK_WIDTH=r["width"](peaks),
+                              PEAK_START=r["start"](peaks),
+                              PEAK_END=r["end"](peaks))
+        # must rename columns from _ to . then reorder
+        # print(r["names"](dfr))
+        # r["names"](dfr) = r["sub"]("\.", "")
+        # column_order = r(
+        #     'c("PEAK.LOC", "PEAK.CVG", "PEAK.SURL", "PEAK.SURR", "PEAK.NLP", "PEAK.WIDTH", "PEAK.START", "PEAK.END")')
+        # r["print"](column_order)
+        # dfr = r["subset"](dfr, True, select=column_order)
+        column_order_py = ['PEAK.LOC', 'PEAK.CVG', 'PEAK.SURL', 'PEAK.SURR',
+                           'PEAK.NLP', 'PEAK.WIDTH', 'PEAK.START', 'PEAK.END']
+        # dfr = dfr.rx2(column_order_py)
+        col_order = ['PEAK.LOC', 'PEAK.CVG', 'PEAK.SURL', 'PEAK.SURR',
+                     'PEAK.NLP', 'PEAK.WIDTH', 'PEAK.START', 'PEAK.END']
+
+        co = r["match"](col_order, r["names"](dfr))
+        print(co)
+        r["write.table"](dfr, "dfr_py", sep=" ")
+        PEAK_INFO["reverse"][peak_type] = dfr
+        # print(PEAK_INFO["reverse"][peak_type])
