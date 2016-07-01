@@ -167,6 +167,7 @@ test.chr <- function(chr,
   ## save(CVG, file="temp/cvg.RData")
   ## save(SIZES, file="temp/sizes.RData")
   ## save(CHR, file="temp/chr.RData")
+  stop("Endre Endre")
 
   PEAKS <<- list()
   PEAK.INFO <<- list()
@@ -272,6 +273,20 @@ test.chr <- function(chr,
 			ok <- (width(p3)>min.width)
 			p3 <- p3[ok]
 
+      rle_to_df = function(rle){
+        cbind(runValue(rle), runLength(rle))
+      }
+      z1 = rle_to_df(zscores1)
+      z2 = rle_to_df(zscores2)
+      z3 = rle_to_df(zscores3)
+      write.table(z1, "tests/test_results/z1.csv", sep=" ")
+      write.table(z2, "tests/test_results/z2.csv", sep=" ")
+      write.table(z3, "tests/test_results/z3.csv", sep=" ")
+
+      write.table(p1, "tests/test_results/p1.csv", sep=" ")
+      write.table(p2, "tests/test_results/p2.csv", sep=" ")
+      write.table(p3, "tests/test_results/p3.csv", sep=" ")
+      stop("Endre Endre")
 			peaks.list <- list(p1,p2,p3)
 			zscores.list <- list(zscores1,zscores2,zscores3)
 			zviews.list <- mapply(function(x,y) Views(x,y),
