@@ -23,3 +23,25 @@ def subset_RS4_cols(rs4, subset, drop=False):
     }
     """)
     return subset_func(rs4, subset, drop)
+
+
+def df_to_rle(df):
+
+    _df_to_rle = r("""function(df){
+    Rle(df$values, df$lengths)
+    }
+    """)
+
+    return _df_to_rle(df)
+
+
+def rle_to_df(rle):
+
+    _rle_to_df = r("""function(rle){
+    df = data.frame(as.vector(runLength(rle)), as.vector(runValue(rle)))
+    colnames(df) = c("lengths", "values")
+    df
+    }
+    """)
+
+    return _rle_to_df(rle)

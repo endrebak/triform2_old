@@ -31,9 +31,6 @@ names = r["names"](chromosome_covers_list)
 for n, l in zip(names, chromosome_covers_list):
     if "backgr" in n and "CENTER" not in n:
         continue
-    # if "backgr" in n:
-    #     print(n)
-    #     print(l)
 
     print("name:", n)
     name = n.lower().replace(".", "_") + ".csv"

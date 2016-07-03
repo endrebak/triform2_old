@@ -29,7 +29,10 @@ MockNamespace = namedtuple("MockNamespace",
 @pytest.fixture(scope="session")
 def args():
     return MockNamespace(2, "hg19", 100, 150, 0.375, 0.1, 10, 10,
-                         ["examples/test.bed"], ["examples/control.bed"])
+                         ["examples/srf_huds_Gm12878_rep1.bed",
+                          "examples/srf_huds_Gm12878_rep2.bed"],
+                         ["examples/backgr_huds_gm12878_rep1.bed",
+                          "examples/backgr_huds_gm12878_rep2.bed"])
 
 
 @pytest.fixture(scope="session")
@@ -107,3 +110,76 @@ def sizes_rep2_backgr():
 #    8214 examples/backgr_huds_Gm12878_rep2.bed:chrY
 #    8688 examples/srf_huds_Gm12878_rep1.bed:chrY
 #    8334 examples/srf_huds_Gm12878_rep2.bed:chrY
+
+
+@pytest.fixture(scope="session")
+def chromosome_cover_results_input():
+
+    return {
+        ("rep1", "reverse"):
+        "tests/test_data/chrY_backgr_huds_Gm12878_rep1_neg.csv",
+        ("rep1", "forward"):
+        "tests/test_data/chrY_backgr_huds_Gm12878_rep1_pos.csv",
+        ("rep2", "reverse"):
+        "tests/test_data/chrY_backgr_huds_Gm12878_rep2_neg.csv",
+        ("rep2", "forward"):
+        "tests/test_data/chrY_backgr_huds_Gm12878_rep2_pos.csv",
+    }
+
+
+@pytest.fixture(scope="session")
+def chromosome_cover_results_chip():
+    return {
+        ("rep1", "reverse"):
+        "tests/test_data/chrY_srf_huds_Gm12878_rep1_neg.csv",
+        ("rep1", "forward"):
+        "tests/test_data/chrY_srf_huds_Gm12878_rep1_pos.csv",
+        ("rep2", "reverse"):
+        "tests/test_data/chrY_srf_huds_Gm12878_rep2_neg.csv",
+        ("rep2", "forward"):
+        "tests/test_data/chrY_srf_huds_Gm12878_rep2_pos.csv"
+    }
+
+
+@pytest.fixture(scope="session")
+def init_result_input():
+    return {
+        ("rep1", "forward", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep1.FORWARD.CENTER.csv",
+        ("rep2", "forward", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep2.FORWARD.CENTER.csv",
+        ("rep1", "reverse", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep1.REVERSE.CENTER.csv",
+        ("rep2", "reverse", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep2.REVERSE.CENTER.csv",
+    }
+
+
+@pytest.fixture(scope="session")
+def init_result_chip():
+    return {
+        ("rep1", "forward", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep1.FORWARD.CENTER.csv",
+        ("rep1", "forward", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep1.FORWARD.LEFT.csv",
+        ("rep1", "forward", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep1.FORWARD.RIGHT.csv",
+        ("rep2", "forward", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep2.FORWARD.CENTER.csv",
+        ("rep2", "forward", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep2.FORWARD.LEFT.csv",
+        ("rep2", "forward", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep2.FORWARD.RIGHT.csv",
+        ("rep1", "reverse", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep1.REVERSE.CENTER.csv",
+        ("rep1", "reverse", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep1.REVERSE.LEFT.csv",
+        ("rep1", "reverse", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep1.REVERSE.RIGHT.csv",
+        ("rep2", "reverse", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep2.REVERSE.CENTER.csv",
+        ("rep2", "reverse", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep2.REVERSE.LEFT.csv",
+        ("rep2", "reverse", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep2.REVERSE.RIGHT.csv"
+    }

@@ -5,7 +5,9 @@ from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 
 
-def _init(covers, is_input, args):
+def init(covers, is_input, args):
+
+    "all the complicated indexing is to match the length 2 input to length 6 output"
 
     init_function = r("""test.init <- function(chr, is.input, flank.delta) {
 

@@ -107,7 +107,6 @@ def find_peaks(result, args):
              y=pos_peak_cvg)
 
         ok = r[">"](lags, args.min_shift)
-        #ok <- (lags > min.shift)
 
         # TODO:
         #if(!any(ok)) next

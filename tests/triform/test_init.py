@@ -10,22 +10,46 @@ from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 importr("S4Vectors")
 
-from triform.init import _init
+from triform.init import init
+from triform.helper_functions import df_to_rle, rle_to_df
 
 
 @pytest.fixture
-def expected_result(run_length_encodings):
+def expected_result_chip(init_result_chip):
+    return {k: pd.read_table(v, sep=" ") for k, v in init_result_chip.items()}
 
-    # df_to_rle = r("""function(df){
-    # Rle(df$values, df$lengths)
-    # }
-    # """)
 
-    # run_lengths = r["list"]()
-    # for name, rle in run_length_encodings.items():
-    #     df = r["read.table"](rle, sep=" ", header=1)
-    #     run_lengths.rx2[name] = df_to_rle(df)
+@pytest.fixture
+def expected_result_input(init_result_input):
+    return {k: pd.read_table(v, sep=" ") for k, v in init_result_input.items()}
 
+
+@pytest.mark.current
+def test_init(expected_result_chip, expected_result_input, input_data_control,
+              input_data_treatment):
+    print(input_data_treatment.items(), 'input_data_treatment')
+    print(input_data_treatment, 'input_data_treatment')
+    assert 0
+
+
+@pytest.fixture
+def input_data_control(chromosome_cover_results_input):
+    control = {k: df_to_rle(r["read.table"](v,
+                                            sep=" "))
+               for (k, v) in chromosome_cover_results_input.items()}
+    return control
+
+
+@pytest.fixture
+def input_data_treatment(chromosome_cover_results_chip):
+    treatment = {k: df_to_rle(r["read.table"](v,
+                                              sep=" "))
+                 for (k, v) in chromosome_cover_results_chip.items()}
+    return treatment
+
+
+@pytest.fixture
+def expected_result_short(run_length_encodings):
     return {k: pd.read_table(v,
                              sep=" ",
                              header=0)
@@ -33,7 +57,7 @@ def expected_result(run_length_encodings):
 
 
 @pytest.fixture
-def input_data():
+def input_data_short():
 
     create_input_data = r("""function() {
   minus = "start end width
@@ -68,8 +92,8 @@ def input_data():
 
 
 @pytest.mark.unit
-def test_init(input_data, expected_result, args):
-    result = _init(input_data, False, args)
+def test_init_short(input_data, expected_result, args):
+    result = init(input_data, False, args)
 
     # convert result to python for easier comparison
     names = list(r["names"](result))

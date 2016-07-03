@@ -163,10 +163,11 @@ test.chr <- function(chr,
                      min.shift=MIN.SHIFT,
                      min.width=MIN.WIDTH,
                      filePath="./chrcovers") {
-  ## test.init(chr, filePath)
-  ## save(CVG, file="temp/cvg.RData")
-  ## save(SIZES, file="temp/sizes.RData")
-  ## save(CHR, file="temp/chr.RData")
+  test.init(chr, filePath)
+  save(CVG, file="temp/cvg.RData")
+  save(SIZES, file="temp/sizes.RData")
+  save(CHR, file="temp/chr.RData")
+  stop()
 
   PEAKS <<- list()
   PEAK.INFO <<- list()
@@ -650,79 +651,79 @@ test.chr <- function(chr,
 ## ##' @param chr The chromosome
 ## ##' @param filePath The path to the chromosome coverage file
 ## ##' @return
-## test.init <- function(chr, filePath="./chrcovers") {
-##   # Checking if CHR exists in the environment
-##   if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
-##   if(chr==CHR) return()
+test.init <- function(chr, filePath="./chrcovers") {
+  # Checking if CHR exists in the environment
+  if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
+  if(chr==CHR) return()
 
-##   ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
-##   load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
+  ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
+  load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
 
-##   CVG <<- list()
-##   SIZES <<- NULL
-##   # N.TYPES is the number of files
-##   for(h in 1:N.TYPES) {       			# TYPE index
-##     type <- SUMCVG.NAMES[h] # "srf_huds_Gm12878_rep1"
-##     # what is c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS)), the below?
-##     #    -    -    -    +    +    +
-##     # 8688 8688 8688 8986 8986 8986
-##     # each file has chromosome coverage - what does it consists of?
-##     # length 100 regions and the regions inbetween them
-##     print(chrcovers[[type]])
-##     SIZES <<- c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS))
+  CVG <<- list()
+  SIZES <<- NULL
+  # N.TYPES is the number of files
+  for(h in 1:N.TYPES) {       			# TYPE index
+    type <- SUMCVG.NAMES[h] # "srf_huds_Gm12878_rep1"
+    # what is c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS)), the below?
+    #    -    -    -    +    +    +
+    # 8688 8688 8688 8986 8986 8986
+    # each file has chromosome coverage - what does it consists of?
+    # length 100 regions and the regions inbetween them
+    print(chrcovers[[type]])
+    SIZES <<- c(SIZES, rep(unlist(chrcovers[[type]]$SIZE),ea=N.LOCS))
 
-##     ## RleList of length 2
-##     ## $`-`
-##     ## integer-Rle of length 57442690 with 12472 runs
-##     ##   Lengths: 2709676     100   31062     100 ...     232     100      94     100
-##     ##   Values :       0       1       0       1 ...       0       1       0       1
-##     ## ## $`+`
-##     ## ## integer-Rle of length 57442498 with 12854 runs
-##     ## ##   Lengths: 2709647      29      71      29 ...      56     100     161     100
-##     ## ##   Values :       0       1       2       1 ...       0       1       0       1
-##     cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
+    ## RleList of length 2
+    ## $`-`
+    ## integer-Rle of length 57442690 with 12472 runs
+    ##   Lengths: 2709676     100   31062     100 ...     232     100      94     100
+    ##   Values :       0       1       0       1 ...       0       1       0       1
+    ## ## $`+`
+    ## ## integer-Rle of length 57442498 with 12854 runs
+    ## ##   Lengths: 2709647      29      71      29 ...      56     100     161     100
+    ## ##   Values :       0       1       2       1 ...       0       1       0       1
+    cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
 
-##     for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
-##       print("i")
-##       print(i)
-##       n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
-##       print("n")
-##       print(n)
-##       j <- ceiling(i/N.LOCS)    		# DIRECTION index
-##       print("j")
-##       print(j)
-##       cvg <- cvgs[[j]]        			# strand-specific coverage
-##       print(cvg)
+    for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
+      print("i")
+      print(i)
+      n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
+      print("n")
+      print(n)
+      j <- ceiling(i/N.LOCS)    		# DIRECTION index
+      print("j")
+      print(j)
+      cvg <- cvgs[[j]]        			# strand-specific coverage
+      print(cvg)
 
-##       if(IS.CONTROL[n]) {
-##         if(IS.CENTER[n]) {
-##           CVG[[n]] <<- cvg
-##         }
-##         next                                    # no need for flanking input coverage
-##       }
+      if(IS.CONTROL[n]) {
+        if(IS.CENTER[n]) {
+          CVG[[n]] <<- cvg
+        }
+        next                                    # no need for flanking input coverage
+      }
 
-##       # This decides whether left, centre or right flank
-##       # N.
-##       switch(1 + (i-1)%%N.LOCS,			# LOCATION index
-##              CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])), # strand-specific coverage on left flank
-##              CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD), # strand-specific coverage on right flank
-##              CVG[[n]] <<- cvg     # strand-specific coverage on center
-##              )
-##       print(CVG[[1 + (i-1)%%N.LOCS]])
-##     }
-##   }
-##   # loop over "srf_huds_Gm12878_rep1" etc done
-##   # have collected coverage data for each strand
-##   # what is it now used for?
+      # This decides whether left, centre or right flank
+      # N.
+      switch(1 + (i-1)%%N.LOCS,			# LOCATION index
+             CVG[[n]] <<- c(FLANK.DELTA.PAD, rev(rev(cvg)[-1:-FLANK.DELTA])), # strand-specific coverage on left flank
+             CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD), # strand-specific coverage on right flank
+             CVG[[n]] <<- cvg     # strand-specific coverage on center
+             )
+      print(CVG[[1 + (i-1)%%N.LOCS]])
+    }
+  }
+  # loop over "srf_huds_Gm12878_rep1" etc done
+  # have collected coverage data for each strand
+  # what is it now used for?
 
-##   names(CVG) <<- CVG.NAMES
-##   maxlen <- max(sapply(CVG,length))
-##   print(CVG)
-##   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
-##   names(SIZES) <<- CVG.NAMES
+  names(CVG) <<- CVG.NAMES
+  maxlen <- max(sapply(CVG,length))
+  print(CVG)
+  CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
+  names(SIZES) <<- CVG.NAMES
 
-##   CHR <<- chr
-## }
+  CHR <<- chr
+}
 
 
 ##' Calculates Z score

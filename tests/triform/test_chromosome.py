@@ -13,6 +13,7 @@ importr("GenomicRanges")
 importr("S4Vectors")
 from triform.init import _init
 from triform.chromosome import chromosome
+from triform.helper_functions import df_to_rle, rle_to_df
 
 
 @pytest.fixture
@@ -36,26 +37,6 @@ def expected_result_peaks_zscores():
                     "tests/test_results/z3.csv"
                 ]]
     return _peaks, _zscores
-
-
-def df_to_rle(df):
-
-    _df_to_rle = r("""function(df){
-    Rle(df$values, df$lengths)
-    }
-    """)
-
-    return _df_to_rle(df)
-
-
-def rle_to_df(rle):
-
-    _rle_to_df = r("""function(rle){
-    cbind(runValue(rle), runLength(rle))
-    }
-    """)
-
-    return _rle_to_df(rle)
 
 
 def _create_rle_list(run_length_files):
@@ -121,42 +102,19 @@ def input_sizes(sizes_rep1_backgr, sizes_rep2_backgr):
     return d
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
                     expected_result):
 
-    input_data = input_data["forward"]
-    input_size = sum(input_sizes["forward"].values())
-    chip_sizes = chip_sizes["forward"]
+    input_data = input_data["reverse"]
+    input_size = sum(input_sizes["reverse"].values())
+    chip_sizes = chip_sizes["reverse"]
 
-    chip_data = chip_data["forward"]
+    chip_data = chip_data["reverse"]
 
     result = chromosome(chip_data, input_data, chip_sizes, input_size, args)
 
-    # gr_to_csv = r("""function(gr, outfile) {
-    # df <- data.frame(starts=start(gr)-1,
-    # ends=end(gr),
-    # width=width(gr))
-    # write.table(df, outfile, sep=" ")
-    # }
-    # """)
-    # rle_to_df = r("""function(rle){
-    # cbind(runValue(rle), runLength(rle))
-    # }""")
-    # df = result["cvg"]
-    # rle = rle_to_df(df)
-    # r["write.table"](rle, "tests/test_data/cvg_forward.csv", sep=" ")
-
-    # gr_to_csv(result["cvg"], "tests/test_data/cvg_reverse.csv")
-
-    # for peak_type, granges in result["peaks"].items():
-    #     gr_to_csv(granges, "{}_peaks_forward.csv".format(peak_type))
-
     result_df = result["peak_info"][1]
-    # r["write.table"](result_df,
-    #                  "tests/test_results/test_chromosome_forward_expected.csv",
-    #                  sep=" ")
-    # assert 0
     result_df = ri2py(r["as.data.frame"](result_df)).reset_index(drop=True)
 
     for (_, prow), (_, xrow) in izip_longest(result_df.iterrows(),
