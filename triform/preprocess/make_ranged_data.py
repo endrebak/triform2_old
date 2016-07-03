@@ -22,6 +22,7 @@ def _make_ranged_data(lines):
 
     importr("GenomicRanges")
 
+    # TODO: why does this function take a string and not a file?
     make_ranged_data_func = r("""
 makeRangedData <- function(lines){
   options(stringsAsFactors=FALSE)

@@ -103,6 +103,7 @@ makeChromosomeCoverFiles <- function(filePath=".", filePattern="RData$", gapped.
       irneg <- IRanges(start=lstart[["-"]] - lgap[["-"]], width=lwidth[["-"]] + 2*lgap[["-"]])
       irl <- IRangesList("-"=irneg, "+"=irpos)
       lcvg <- coverage(irl)
+      print(lcvg)
       covers <- list(SIZE=lsize, CVG=lcvg)
 
       print(outputPath)

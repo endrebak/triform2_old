@@ -137,6 +137,8 @@ def _preprocess(files, args):
     chromosome_covers = defaultdict(list)
     for file in files:
         control_chromosome_dfs = bed_to_chromosome_dfs(file, args)
+        # is the make ranged data necessary?
+        # seems to do nothing
         ranged_data = make_ranged_data(control_chromosome_dfs, args)
         chrcovers = make_chromosome_cover_files(ranged_data, args)
         chromosome_covers[file].append(chrcovers)

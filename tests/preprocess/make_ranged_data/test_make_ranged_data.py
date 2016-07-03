@@ -6,6 +6,7 @@ from io import StringIO
 from rpy2.robjects import r, pandas2ri
 ri2py = pandas2ri.ri2py
 from rpy2.robjects.packages import importr
+importr("IRanges")
 
 from triform.preprocess.make_ranged_data import _make_ranged_data
 
@@ -56,3 +57,20 @@ def test_make_ranged_data(input_data, expected_result):
     print(bed_dataframe.dtypes)
     print(expected_result.dtypes)
     assert bed_dataframe.equals(expected_result)
+
+    # bc = importr("BiocGenerics")
+    # gidb = importr("GenomeInfoDb")
+    # base = importr("base")
+
+    # seqnames = base.as_vector(gidb.seqnames(result))
+    # starts = bc.start(result)
+    # ends = bc.end(result)
+    # strands = base.as_vector(bc.strand(result))
+
+    # bed_cols = [pd.Series(ri2py(c)) for c in [seqnames, starts, ends, strands]]
+    # bed_dataframe = pd.concat(bed_cols, axis=1)
+    # print(bed_dataframe)
+    # print(expected_result)
+    # print(bed_dataframe.dtypes)
+    # print(expected_result.dtypes)
+    # assert bed_dataframe.equals(expected_result)

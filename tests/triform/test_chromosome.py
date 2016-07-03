@@ -11,7 +11,6 @@ ri2py = pandas2ri.ri2py
 from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 importr("S4Vectors")
-
 from triform.init import _init
 from triform.chromosome import chromosome
 
@@ -126,16 +125,35 @@ def input_sizes(sizes_rep1_backgr, sizes_rep2_backgr):
 def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
                     expected_result):
 
-    input_data = input_data["reverse"]
-    input_size = sum(input_sizes["reverse"].values())
-    chip_sizes = chip_sizes["reverse"]
+    input_data = input_data["forward"]
+    input_size = sum(input_sizes["forward"].values())
+    chip_sizes = chip_sizes["forward"]
 
-    chip_data = chip_data["reverse"]
+    chip_data = chip_data["forward"]
 
     result = chromosome(chip_data, input_data, chip_sizes, input_size, args)
+
+    # gr_to_csv = r("""function(gr, outfile) {
+    # df <- data.frame(starts=start(gr)-1,
+    # ends=end(gr),
+    # width=width(gr))
+    # write.table(df, outfile, sep=" ")
+    # }
+    # """)
+    # rle_to_df = r("""function(rle){
+    # cbind(runValue(rle), runLength(rle))
+    # }""")
+    # df = result["cvg"]
+    # rle = rle_to_df(df)
+    # r["write.table"](rle, "tests/test_data/cvg_forward.csv", sep=" ")
+
+    # gr_to_csv(result["cvg"], "tests/test_data/cvg_reverse.csv")
+
+    # for peak_type, granges in result["peaks"].items():
+    #     gr_to_csv(granges, "{}_peaks_forward.csv".format(peak_type))
+
     result_df = result["peak_info"][1]
     result_df = ri2py(r["as.data.frame"](result_df)).reset_index(drop=True)
-    # result_df.to_csv("tests/test_results/result_df.csv", sep=" ", index=False)
 
     for (_, prow), (_, xrow) in izip_longest(result_df.iterrows(),
                                              expected_result.iterrows()):
@@ -144,44 +162,3 @@ def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
             raise
 
     assert np.allclose(result_df, expected_result)
-
-# @pytest.mark.current
-# def test_compute_peaks_and_zscores(chip_data, input_data, chip_sizes,
-#                                    input_sizes, args,
-#                                    expected_result_peaks_zscores):
-#     expected_peaks, expected_zscores = expected_result_peaks_zscores
-
-#     input_data = input_data["reverse"]
-#     input_size = sum(input_sizes["reverse"].values())
-#     chip_sizes = chip_sizes["reverse"]
-
-#     chip = chip_data["reverse"]
-
-#     input = r["Reduce"]("+", input_data)
-
-#     ratios = compute_ratios(chip_sizes, input_size)
-
-#     ratio = input_size / sum(chip_sizes.values())
-
-#     center = collect_key(chip, "center")
-#     left = collect_key(chip, "left")
-#     right = collect_key(chip, "right")
-
-#     cvg = r["Reduce"]("+", list(center.values()))
-#     left = r["Reduce"]("+", list(left.values()))
-#     right = r["Reduce"]("+", list(right.values()))
-
-#     _peaks, _zscores = compute_peaks_and_zscores(
-#         cvg, center, left, right, chip, input, ratios, ratio, args)
-
-#     results = []
-#     for i, (p, x) in enumerate(zip(_peaks, expected_peaks)):
-#         print(i, "peaks")
-#         p = ri2py(r["as.data.frame"](p)).astype(np.int64)
-
-#         for (_, prow), (_, xrow) in izip_longest(p.iterrows(), x.iterrows()):
-#             if not prow.equals(xrow):
-#                 print(prow, xrow)
-
-#         results.append(p.equals(x))
-#     print(results)

@@ -87,3 +87,49 @@ def test_make_chromosome_cover_files(input_data, expected_result, args):
 
     all_equals = r["isTRUE"](r["all.equal"](expected_result, result))
     assert all_equals
+
+
+"""For some reason there are some tiny differences between the original and my version."""
+
+# @pytest.fixture
+# def input_data_full():
+
+#     df = "".join(open(
+#         "tests/test_data/srf_rep1_plus.bed_to_chromosome").readlines())
+
+#     command = """
+# lines = "{}"
+# options(stringsAsFactors=FALSE)
+# con <- textConnection(lines)
+# df <- read.delim(con, colClasses=c("character", rep("integer",2), "character"), header=1)
+# close(con)
+# colnames(df) <- c("seqnames", "start", "end", "strand")
+#     """.format(df)
+#     r(command)
+#     granges = r("makeGRangesFromDataFrame(df)")
+
+#     return granges
+
+# @pytest.fixture
+# def expected_result_full():
+#     df = r["read.table"]("tests/test_data/srf_rep1_plus.ranged_data", sep=" ")
+#     rle = r["Rle"](df.rx2("v"), df.rx2("l"))
+
+#     return rle
+
+# @pytest.mark.current
+# def test_make_chromosome_cover_files(input_data_full, expected_result_full,
+#                                      args):
+#     result = _make_chromosome_cover_files(input_data_full, args)
+
+#     getplus = r("function(x) x[['+']]")
+#     plus = getplus(result[1])
+#     print(plus == expected_result_full)
+
+#     rle_to_df = r("""function(rle){
+#     cbind(runValue(rle), runLength(rle))
+#     }""")
+#     plus_df = rle_to_df(plus)
+#     r["write.table"](plus_df, "rle_deleteme", sep=" ")
+
+#     assert 0

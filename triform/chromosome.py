@@ -153,7 +153,6 @@ def chromosome(chip, input, chip_sizes, input_size, args):
     right = r["Reduce"]("+", list(right.values()))
 
     results["cvg"] = cvg
-
     _peaks, _zscores = compute_peaks_and_zscores(
         cvg, center, left, right, chip, input, ratios, ratio, args)
 
