@@ -9,6 +9,8 @@ from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 importr("S4Vectors")
 
+from triform.helper_functions import subset_RS4
+
 
 def collect_key(d, key):
     d2 = {}
@@ -49,14 +51,6 @@ def compute_ok4(ratios, center, input):
         pos = r["=="](1, s)
         signs.append(pos)
     return r["Reduce"]("*", signs)
-
-
-def subset_RS4(rs4, subset, drop=False):
-    subset_func = r("""function(o, s, d){
-    o[s, drop=d]
-    }
-    """)
-    return subset_func(rs4, subset, drop)
 
 
 def compute_ratios(chip_sizes, input_size):

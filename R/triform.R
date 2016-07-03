@@ -208,7 +208,6 @@ test.chr <- function(chr,
       cvg <- cvg1 + cvg2
 			CENTER.CVG[[type]][[direction]] <<- cvg
       print(cvg)
-      stop("Endre Endre Endre")
 
 			# Form-1 test with consistency check
 			signs1 <- sign(2*cvg1-surL1-surR1)
@@ -380,6 +379,9 @@ test.chr <- function(chr,
 
 			p1 <- p1[1:length(p1) %in% ov[,1]]
 			p2 <- p2[1:length(p2) %in% ov[,2]]
+      print(p1)
+      print(p2)
+      stop()
 			peaks <- IRanges(start=pmin(start(p1),start(p2)),
 											 end=pmax(end(p1),end(p2)))
 
@@ -406,8 +408,19 @@ test.chr <- function(chr,
 			n.peaks <- length(peaks)
 			PEAKS[[type]][[direction]][[i]] <<- peaks
 
+      print("ov[,1]")
+      print(ov[,1])
+      print("ov[,2]")
+      print(ov[,2])
+
 			info1 <- PEAK.INFO[[type]][[1]][[i]][ov[,1],]
 			info2 <- PEAK.INFO[[type]][[2]][[i]][ov[,2],]
+      print("info1")
+      print(info1)
+      print("info2")
+      print(info2)
+      stop()
+      stop("Endre Endre Endre")
 			peak.locs <- as.integer(round((info1$PEAK.LOC + info2$PEAK.LOC)/2))
 
 			peak.cvg <- info1$PEAK.CVG + info2$PEAK.CVG

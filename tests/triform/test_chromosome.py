@@ -153,6 +153,10 @@ def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
     #     gr_to_csv(granges, "{}_peaks_forward.csv".format(peak_type))
 
     result_df = result["peak_info"][1]
+    # r["write.table"](result_df,
+    #                  "tests/test_results/test_chromosome_forward_expected.csv",
+    #                  sep=" ")
+    # assert 0
     result_df = ri2py(r["as.data.frame"](result_df)).reset_index(drop=True)
 
     for (_, prow), (_, xrow) in izip_longest(result_df.iterrows(),
