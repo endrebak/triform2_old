@@ -167,7 +167,6 @@ test.chr <- function(chr,
   save(CVG, file="temp/cvg.RData")
   save(SIZES, file="temp/sizes.RData")
   save(CHR, file="temp/chr.RData")
-  stop()
 
   PEAKS <<- list()
   PEAK.INFO <<- list()
@@ -654,7 +653,7 @@ test.chr <- function(chr,
 test.init <- function(chr, filePath="./chrcovers") {
   # Checking if CHR exists in the environment
   if(!exists("CHR",inherits=TRUE)) CHR <<- "none"
-  if(chr==CHR) return()
+  ## if(chr==CHR) return()
 
   ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
   load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
@@ -709,7 +708,11 @@ test.init <- function(chr, filePath="./chrcovers") {
              CVG[[n]] <<- c(cvg[-1:-FLANK.DELTA], FLANK.DELTA.PAD), # strand-specific coverage on right flank
              CVG[[n]] <<- cvg     # strand-specific coverage on center
              )
-      print(CVG[[1 + (i-1)%%N.LOCS]])
+      x = 1 + (i-1)%%N.LOCS
+      print("x")
+      print(x)
+      print("CVG[[x]]")
+      print(CVG[[x]])
     }
   }
   # loop over "srf_huds_Gm12878_rep1" etc done
@@ -718,6 +721,9 @@ test.init <- function(chr, filePath="./chrcovers") {
 
   names(CVG) <<- CVG.NAMES
   maxlen <- max(sapply(CVG,length))
+  print("maxlen")
+  print(maxlen)
+  stop("Endre Endre Endre")
   print(CVG)
   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
   names(SIZES) <<- CVG.NAMES

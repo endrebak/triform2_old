@@ -4,8 +4,11 @@
 # want to convert list of 6 chrcovers to csv so can store for tests
 
 import pandas as pd
+import numpy as np
 import pytest
+
 from rpy2.robjects import r, pandas2ri
+ri2py = pandas2ri.ri2py
 from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 importr("S4Vectors")
@@ -16,20 +19,60 @@ from triform.helper_functions import df_to_rle, rle_to_df
 
 @pytest.fixture
 def expected_result_chip(init_result_chip):
-    return {k: pd.read_table(v, sep=" ") for k, v in init_result_chip.items()}
+    return {k: pd.read_table(v,
+                             sep=" ",
+                             index_col=0)
+            for k, v in init_result_chip.items()}
 
 
 @pytest.fixture
 def expected_result_input(init_result_input):
-    return {k: pd.read_table(v, sep=" ") for k, v in init_result_input.items()}
+    return {k: pd.read_table(v,
+                             sep=" ",
+                             index_col=0)
+            for k, v in init_result_input.items()}
 
 
 @pytest.mark.current
-def test_init(expected_result_chip, expected_result_input, input_data_control,
-              input_data_treatment):
-    print(input_data_treatment.items(), 'input_data_treatment')
-    print(input_data_treatment, 'input_data_treatment')
-    assert 0
+def test_init_treatment(expected_result_chip, input_data_treatment, args):
+
+    asserts = []
+    results_treatment = init(input_data_treatment, False, args)
+    for k, v in results_treatment.items():
+        print(k)
+        expected_result = expected_result_chip[k]
+        actual_result = ri2py(rle_to_df(v)).astype(np.int64)
+        print(expected_result.tail())
+        print(actual_result.tail())
+        assert expected_result.equals(actual_result)
+        asserts.append(expected_result.equals(actual_result))
+
+    print(asserts)
+    assert all(asserts)
+
+
+@pytest.mark.current
+def test_init_background(expected_result_input, input_data_control, args):
+
+    results_control = init(input_data_control, True, args)
+
+    asserts = []
+    for k, v in results_control.items():
+        expected_result = expected_result_input[k]
+        actual_result = ri2py(rle_to_df(v)).astype(np.int64)
+        # actual_result.to_csv("backr_actual_result_{}.csv".format("_".join(k)),
+        # sep=" ")
+        asserts.append(expected_result.equals(actual_result))
+
+    print(asserts)
+
+    assert all(asserts)
+    # print(input_data_treatment.items(), 'input_data_treatment')
+    # print(input_data_treatment, 'input_data_treatment')
+
+    # for k, v in input_data_treatment.items():
+    #     print(k)
+    #     print(v)
 
 
 @pytest.fixture

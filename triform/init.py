@@ -1,3 +1,5 @@
+from itertools import product
+
 from rpy2 import robjects as ro
 from rpy2.robjects import r, pandas2ri
 ri2py = pandas2ri.ri2py
@@ -7,60 +9,34 @@ importr("GenomicRanges")
 
 def init(covers, is_input, args):
 
-    "all the complicated indexing is to match the length 2 input to length 6 output"
+    replicates = set(k[0] for k in covers.keys())
 
-    init_function = r("""test.init <- function(chr, is.input, flank.delta) {
+    results = dict()
 
-    flank.delta.pad <- Rle(0, flank.delta)
+    flank_delta_pad = r["Rle"](0, args.flank_distance)
 
-    DIRECTIONS <- factor(1:2, lab=c("REVERSE","FORWARD"))
-    N.DIRS <- length(DIRECTIONS)
+    for replicate, direction, location in product(
+            replicates, ["reverse", "forward"], ["left", "right", "center"]):
 
-    LOCATIONS <- factor(1:3, lab=c("LEFT","RIGHT","CENTER"))
-    N.LOCS <- length(LOCATIONS)
+        cvg = covers[replicate, direction]
+        if is_input:
+            if location == "center":
+                results[replicate, direction, location] = cvg
+            continue
 
-    N.DIRLOCS <- N.DIRS*N.LOCS
+        if location == "left":
+            cvg = r('''function(cvg, flank.delta.pad, flank.delta) {
+              c(flank.delta.pad, rev(rev(cvg)[-1:-flank.delta]))
+            }''')(cvg, flank_delta_pad, args.flank_distance)
+        if location == "right":
+            cvg = r('''function(cvg, flank.delta.pad, flank.delta) {
+              c(cvg[-1:-flank.delta], flank.delta.pad)
+            }''')(cvg, flank_delta_pad, args.flank_distance)
 
-    DIRECTION <- rep(DIRECTIONS, 3)
-    LOCATION <- rep(LOCATIONS, 2)
+        results[replicate, direction, location] = cvg
 
-    CVG <<- list()
-    SIZES <<- rep(chr$SIZES, 3)
-    cvgs <- chr$CVG		# coverage on each strand
+    maxlen = r["max"](r["sapply"](results.values(), "length"))
+    lapply = r('function(cvg, maxlen) c(cvg,Rle(0,maxlen-length(cvg)))')
+    results = {k: lapply(v, maxlen) for (k, v) in results.items()}
 
-    h = 1
-    for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
-      n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
-      print("n")
-      print(n)
-      j <- ceiling(i/N.LOCS)    		# DIRECTION index
-      print("j")
-      print(j)
-      cvg <- cvgs[[j]]        			# strand-specific coverage
-      print("cvg")
-      print(names(cvgs)[j])
-      print(cvg)
-
-      if(is.input) {
-          if(IS.CENTER[n]) {
-              CVG[[n]] <<- cvg
-          }
-          next												# no need for flanking input coverage
-      }
-      switch(1 + (i-1)%%N.LOCS,			# LOCATION index
-              CVG[[n]] <<- c(flank.delta.pad, rev(rev(cvg)[-1:-flank.delta])),		# strand-specific coverage on left flank
-              CVG[[n]] <<- c(cvg[-1:-flank.delta], flank.delta.pad),							#	strand-specific coverage on right flank
-              CVG[[n]] <<- cvg																										# strand-specific coverage on center
-      )
-    }
-    names(CVG) <<- paste(DIRECTION,LOCATION,sep=".")
-    maxlen <- max(sapply(CVG,length))
-
-    names(SIZES) <<- names(CVG)
-
-    CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
-    # save(CVG, file="test_CVG.RData")
-    CVG
-    }""")
-
-    return init_function(covers, is_input, args.flank_distance)
+    return results
