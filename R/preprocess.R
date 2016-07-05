@@ -60,6 +60,7 @@ makeRangedData <- function(filePath="."){
       colClasses=c("character", rep("integer",2), rep("NULL",2), "character"))
     colnames(dfr) <- c("space", "start", "end", "strand")
     dfr <- with(dfr, dfr[order(space, start, end), ])
+    write.table(dfr, file=file.path(filePath, sub("bed$", "csv", file)), sep=" ")
     rd <- as(dfr, "RangedData")
     save(rd, file=file.path(filePath, sub("bed$", "RData", file)))
   }

@@ -40,7 +40,7 @@ def input_data():
     return results
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_find_peaks(input_data, args):
     find_peaks(input_data, args)
 

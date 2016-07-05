@@ -12,18 +12,6 @@ MockNamespace = namedtuple("MockNamespace",
                            ["number_cores", "genome", "read_width",
                             "flank_distance", "min_enrichment", "max_p",
                             "min_shift", "min_width", "treatment", "control"])
-# egs = 2290813547.4  # this is the effective genome size used by the original sicer for hg19
-
-# @pytest.fixture(scope="session")
-# def args_200_fast():
-#     return MockNamespace(25, "hg19", False, 200, 150, False, 3, 1, egs, False,
-#                          ["examples/test.bed"], ["examples/control.bed"])
-
-# @pytest.fixture(scope="session")
-# def args_200():
-#     return MockNamespace(1, "hg19", False, 200, 150, False, 3, 0.05, egs,
-#                          False, ["examples/test.bed"],
-#                          ["examples/control.bed"])
 
 
 @pytest.fixture(scope="session")
@@ -33,6 +21,18 @@ def args():
                           "examples/srf_huds_Gm12878_rep2.bed"],
                          ["examples/backgr_huds_gm12878_rep1.bed",
                           "examples/backgr_huds_gm12878_rep2.bed"])
+
+
+@pytest.fixture(scope="session")
+def indata_make_chromosome_cover_files_chip():
+    return {"rep1": "tests/test_data/srf_huds_Gm12878_rep1.csv",
+            "rep2": "tests/test_data/srf_huds_Gm12878_rep2.csv"}
+
+
+@pytest.fixture(scope="session")
+def indata_make_chromosome_cover_files_input():
+    return {"rep1": "tests/test_data/backgr_huds_Gm12878_rep1.csv",
+            "rep2": "tests/test_data/backgr_huds_Gm12878_rep2.csv"}
 
 
 @pytest.fixture(scope="session")

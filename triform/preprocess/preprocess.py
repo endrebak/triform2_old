@@ -28,8 +28,15 @@ def _preprocess(files, args):
 
     covers_per_chromosome = defaultdict(list)
     for file, chrcovers_list in chromosome_covers.items():
+        print(file)
         for chrcovers in chrcovers_list:
             for chromosome, cover in chrcovers.items():
+                print(cover)
                 covers_per_chromosome[chromosome].append(cover)
 
+    # returns a dict where the keys are chromosomes, and the data is lists of results,
+    # the first belonging to the first file
+
+    # init should take a dict of chromosomes, where each chromosomes contains a dict of
+    # filename, direction!
     return covers_per_chromosome

@@ -33,7 +33,7 @@ def expected_result_input(init_result_input):
             for k, v in init_result_input.items()}
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_init_treatment(expected_result_chip, input_data_treatment, args):
 
     asserts = []
@@ -67,12 +67,6 @@ def test_init_background(expected_result_input, input_data_control, args):
     print(asserts)
 
     assert all(asserts)
-    # print(input_data_treatment.items(), 'input_data_treatment')
-    # print(input_data_treatment, 'input_data_treatment')
-
-    # for k, v in input_data_treatment.items():
-    #     print(k)
-    #     print(v)
 
 
 @pytest.fixture

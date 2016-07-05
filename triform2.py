@@ -127,6 +127,9 @@ if __name__ == '__main__':
     print("# triform2 " + " ".join(argv[1:]))
 
     treatment, control = preprocess(args)
+    print(type(treatment["chrY"]))
+    print(treatment["chrY"])
+    print(treatment["chrY"].keys())
     print(init(treatment, False, args))
 
     rpy2.robjects.r["save"](treatment[0], file="chrcovers.RData")

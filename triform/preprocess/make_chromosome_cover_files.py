@@ -23,6 +23,33 @@ def _make_chromosome_cover_files(granges, args):
 
     importr("GenomicRanges")
 
+    strands = r(
+        'function(rd) factor(as.vector(strand(rd)), levels=c("+", "-"))')(
+            granges)
+    print(strands)
+    strand_lists = r["split"](granges, strands)
+    strand_sizes = r["lapply"](strand_lists, "length")
+    strand_starts = r["lapply"](strand_lists, "start")
+    strand_widths = r["lapply"](strand_lists, "width")
+    strand_gaps = r["lapply"](
+        strand_widths,
+        r("function(w) floor(({}-w)/2)".format(args.read_width)))
+
+    get_iranges = r('''function(lstart, lgap, lwidth, strand) {
+    IRanges(start=lstart[[strand]] - lgap[[strand]], width=lwidth[[strand]] + 2*lgap[[strand]])
+    }''')
+    forward_iranges = get_iranges(strand_starts, strand_widths, strand_gaps,
+                                  "+")
+    reverse_iranges = get_iranges(strand_starts, strand_widths, strand_gaps,
+                                  "-")
+
+    r["IRangesList"]("+")
+    iranges_list = r(
+        'function(irneg, irpos) IRangesList("-"=irneg, "+"=irpos)')(
+            reverse_iranges, forward_iranges)
+    cvg = r["coverage"](iranges_list)
+    print(cvg)
+
     make_chromosome_cover_files_func = r("""
 makeChromosomeCoverFiles <- function(rd, gapped.width){
   options(stringsAsFactors=FALSE)
