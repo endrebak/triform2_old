@@ -144,11 +144,11 @@ def chromosome_cover_results_chip():
 @pytest.fixture(scope="session")
 def init_result_input():
     return {
-        ("rep1", "forward", "center"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward", "center"):
         "tests/test_data/backgr_huds_Gm12878_rep1.FORWARD.CENTER.csv",
         ("rep2", "forward", "center"):
         "tests/test_data/backgr_huds_Gm12878_rep2.FORWARD.CENTER.csv",
-        ("rep1", "reverse", "center"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "center"):
         "tests/test_data/backgr_huds_Gm12878_rep1.REVERSE.CENTER.csv",
         ("rep2", "reverse", "center"):
         "tests/test_data/backgr_huds_Gm12878_rep2.REVERSE.CENTER.csv",
@@ -158,28 +158,28 @@ def init_result_input():
 @pytest.fixture(scope="session")
 def init_result_chip():
     return {
-        ("rep1", "forward", "center"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward", "center"):
         "tests/test_data/actual_result_rep1_forward_center.csv",
-        ("rep1", "forward", "left"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward", "left"):
         "tests/test_data/actual_result_rep1_forward_left.csv",
-        ("rep1", "forward", "right"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward", "right"):
         "tests/test_data/actual_result_rep1_forward_right.csv",
-        ("rep2", "forward", "center"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "forward", "center"):
         "tests/test_data/actual_result_rep2_forward_center.csv",
-        ("rep2", "forward", "left"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "forward", "left"):
         "tests/test_data/actual_result_rep2_forward_left.csv",
-        ("rep2", "forward", "right"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "forward", "right"):
         "tests/test_data/actual_result_rep2_forward_right.csv",
-        ("rep1", "reverse", "center"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "center"):
         "tests/test_data/actual_result_rep1_reverse_center.csv",
-        ("rep1", "reverse", "left"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "left"):
         "tests/test_data/actual_result_rep1_reverse_left.csv",
-        ("rep1", "reverse", "right"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "right"):
         "tests/test_data/actual_result_rep1_reverse_right.csv",
-        ("rep2", "reverse", "center"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "center"):
         "tests/test_data/actual_result_rep2_reverse_center.csv",
-        ("rep2", "reverse", "left"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "left"):
         "tests/test_data/actual_result_rep2_reverse_left.csv",
-        ("rep2", "reverse", "right"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "right"):
         "tests/test_data/actual_result_rep2_reverse_right.csv"
     }

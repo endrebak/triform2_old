@@ -36,12 +36,6 @@ def expected_result_input(init_result_input):
 @pytest.mark.unit
 def test_init_treatment(expected_result_chip, input_data_treatment, args):
 
-    for k, v in input_data_treatment.items():
-        print(k)
-        print(v)
-        print(type(v))
-
-    raise
     asserts = []
     results_treatment = _init(input_data_treatment, False, args)
     for k, v in results_treatment.items():
