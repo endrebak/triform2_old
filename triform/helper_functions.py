@@ -9,6 +9,14 @@ def subset_RS4(rs4, subset, drop=False):
     return subset_func(rs4, subset, drop)
 
 
+def subset_RS4_2(rs4, subset, drop=False):
+    subset_func = r("""function(o, s, d){
+    o[[s]]
+    }
+    """)
+    return subset_func(rs4, subset, drop)
+
+
 def subset_RS4_rows(rs4, subset, drop=False):
     subset_func = r("""function(o, s, d){
     o[s, ,drop=d]

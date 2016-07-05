@@ -20,6 +20,7 @@ def expected_result_control(chromosome_cover_results_input):
     control = {k: pd.read_table(v,
                                 sep=" ")
                for (k, v) in chromosome_cover_results_input.items()}
+    print(control.keys(), 'control.keys()')
     return control
 
 
@@ -31,18 +32,31 @@ def expected_result_treatment(chromosome_cover_results_chip):
     return treatment
 
 
-@pytest.mark.unit
+@pytest.mark.current
 def test_preprocess(args, expected_result_treatment, expected_result_control):
-    treatment, control = preprocess(args)
-    for rep, l in zip(["rep1", "rep2"], control["chrY"]):
-        cvg = l.rx2("CVG")
-        get_strand = r("function(d, k) d[k]")
+    treatment, control, treatment_sizes, control_sizes = preprocess(args)
 
-        pos = get_strand(cvg, "+")
-        pos = ri2py(rle_to_df(pos)).astype(np.int64)
+    t = treatment["chrY"]
+    for k, l in t.items():
+        # print(k, "key")
+        # print(l)
+        l_as_df = ri2py(rle_to_df(l)).astype(np.int64)
+        # print(l_as_df)
 
-        neg = get_strand(cvg, "-")
-        neg = ri2py(rle_to_df(neg)).astype(np.int64)
+        assert expected_result_treatment[k].equals(l_as_df)
 
-        assert expected_result_control[rep, "forward"].equals(pos)
-        assert expected_result_control[rep, "reverse"].equals(neg)
+    c = control["chrY"]
+    print(expected_result_control.keys(), 'expected_result_control.keys()')
+    for k, l in c.items():
+        # print(k, "key")
+        # print(l)
+        f, d = k
+        print(f)
+        print(d)
+        print((f, d) in expected_result_control)
+        l_as_df = ri2py(rle_to_df(l)).astype(np.int64)
+        print(l_as_df.head(), 'l_as_df.head()')
+        print(expected_result_control[k].head(),
+              "expected_result_control[k].head()")
+
+        assert expected_result_control[k].equals(l_as_df)

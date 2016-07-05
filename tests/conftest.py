@@ -16,11 +16,11 @@ MockNamespace = namedtuple("MockNamespace",
 
 @pytest.fixture(scope="session")
 def args():
-    return MockNamespace(2, "hg19", 100, 150, 0.375, 0.1, 10, 10,
+    return MockNamespace(1, "hg19", 100, 150, 0.375, 0.1, 10, 10,
                          ["examples/srf_huds_Gm12878_rep1.bed",
                           "examples/srf_huds_Gm12878_rep2.bed"],
-                         ["examples/backgr_huds_gm12878_rep1.bed",
-                          "examples/backgr_huds_gm12878_rep2.bed"])
+                         ["examples/backgr_huds_Gm12878_rep1.bed",
+                          "examples/backgr_huds_Gm12878_rep2.bed"])
 
 
 @pytest.fixture(scope="session")
@@ -116,13 +116,13 @@ def sizes_rep2_backgr():
 def chromosome_cover_results_input():
 
     return {
-        ("rep1", "reverse"):
+        ("examples/backgr_huds_Gm12878_rep1.bed", "reverse"):
         "tests/test_data/chrY_backgr_huds_Gm12878_rep1_neg.csv",
-        ("rep1", "forward"):
+        ("examples/backgr_huds_Gm12878_rep1.bed", "forward"):
         "tests/test_data/chrY_backgr_huds_Gm12878_rep1_pos.csv",
-        ("rep2", "reverse"):
+        ("examples/backgr_huds_Gm12878_rep2.bed", "reverse"):
         "tests/test_data/chrY_backgr_huds_Gm12878_rep2_neg.csv",
-        ("rep2", "forward"):
+        ("examples/backgr_huds_Gm12878_rep2.bed", "forward"):
         "tests/test_data/chrY_backgr_huds_Gm12878_rep2_pos.csv",
     }
 
@@ -130,13 +130,13 @@ def chromosome_cover_results_input():
 @pytest.fixture(scope="session")
 def chromosome_cover_results_chip():
     return {
-        ("rep1", "reverse"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse"):
         "tests/test_data/chrY_srf_huds_Gm12878_rep1_neg.csv",
-        ("rep1", "forward"):
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward"):
         "tests/test_data/chrY_srf_huds_Gm12878_rep1_pos.csv",
-        ("rep2", "reverse"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "reverse"):
         "tests/test_data/chrY_srf_huds_Gm12878_rep2_neg.csv",
-        ("rep2", "forward"):
+        ("examples/srf_huds_Gm12878_rep2.bed", "forward"):
         "tests/test_data/chrY_srf_huds_Gm12878_rep2_pos.csv"
     }
 

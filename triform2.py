@@ -126,10 +126,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print("# triform2 " + " ".join(argv[1:]))
 
-    treatment, control = preprocess(args)
-    print(type(treatment["chrY"]))
-    print(treatment["chrY"])
-    print(treatment["chrY"].keys())
-    print(init(treatment, False, args))
+    treatment, control, treatment_sizes, control_sizes = preprocess(args)
+
+    for k, v in treatment.items():
+        print(k)
+        print(v)
+        print(type(v))
+    init_treatment = init(treatment, False, args)
+    print(init_treatment)
+    init_control = init(control, False, args)
 
     rpy2.robjects.r["save"](treatment[0], file="chrcovers.RData")

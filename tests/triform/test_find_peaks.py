@@ -44,7 +44,7 @@ def input_data():
 def test_find_peaks(input_data, args):
     find_peaks(input_data, args)
 
-    assert 0
+    # assert 0
 
 
 def find_peaks(result, args):
