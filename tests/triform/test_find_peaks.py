@@ -37,6 +37,14 @@ def input_data():
                              direction)
         results["chrY"][direction, "cvg"] = df_to_rle(df)
 
+    for i in range(1, 4):
+        results["chrY"]["forward", i, "peak_info"] = r["read.table"](
+            "tests/test_data/chromosome_result_forward%s.csv" % i,
+            sep=" ")
+        results["chrY"]["reverse", i, "peak_info"] = r["read.table"](
+            "tests/test_data/chromosome_result_reverse%s.csv" % i,
+            sep=" ")
+
     return results
 
 
@@ -46,23 +54,54 @@ def expected_result():
     results = {}
     for peak_type in range(1, 4):
 
-        df = r["read.table"]("tests/test_data/find_peaks_result_%s.csv" %
+        info = pd.read_table("tests/test_data/find_peaks_result_%s.csv" %
                              peak_type,
                              sep=" ")
-        results[peak_type] = df
+        results["info", peak_type] = info
 
-    return df
+        peaks = pd.read_table("tests/test_data/merge_peaks_%s.csv" % peak_type,
+                              sep=" ")
+        results["peaks", peak_type] = peaks
+
+    return results
 
 
 @pytest.mark.current
 def test_find_peaks(input_data, expected_result, args):
-    peaks = _find_peaks(input_data["chrY"], args)
+    peaks, info = _find_peaks(input_data["chrY"], "chrY", args)
 
-    assert expected_result[1] == peaks[1]
-    assert 0
+    for i in range(1, 4):
+        print(i)
+        print("expected_result['info', i]")
+        expected_result_py = expected_result["info", i]
+        print(expected_result_py)
+        print("info[i]")
+        actual_result_py = ri2py(info[i])
+        print(actual_result_py)
+        assert np.allclose(expected_result_py, actual_result_py)
+
+    for i in range(1, 4):
+        print(i)
+        print("expected_result['peaks', i]")
+        expected_result_py = expected_result["peaks", i]
+        print(expected_result_py)
+        print("peaks[i]")
+        actual_result_py = ri2py(r["as.data.frame"](peaks[i]))
+        print(actual_result_py)
+        assert np.allclose(expected_result_py, actual_result_py)
 
 
-def _find_peaks(indata, args):
+r('''
+zscore <- function(x,y,r=1) {  # r = size.y/size.x
+  dif <- (r*x-y)
+  zs <- dif/sqrt(r*(x+y))
+  zs[!dif] <- 0
+  zs
+}
+''')
+
+
+def _find_peaks(indata, chromosome, args):
 
     merged_peaks = {}
     merged_info = {}
@@ -70,15 +109,11 @@ def _find_peaks(indata, args):
     pos_cvg = indata["forward", "cvg"]
     neg_cvg = indata["reverse", "cvg"]
 
+    number_peaks = 0
     for i in range(1, 4):
         p1 = indata["reverse", i]
         p2 = indata["forward", i]
         print(i)
-        print("p1")
-        print(p1)
-        print("p2")
-        print(p2)
-
         # TODO:
         # if(!length(p1) | !length(p2)) next
 
@@ -133,52 +168,65 @@ def _find_peaks(indata, args):
 
         ov = subset_RS4_rows(ov, ok)
         peaks = subset_RS4(peaks, ok)
-        n_peaks = r["length"](peaks)
+        n_peaks = r["length"](peaks)[0]
 
         merged_peaks[i] = peaks
 
-        merged_info["reverse"] = subset_RS4_cols(ov, 1)
-        merged_info["forward"] = subset_RS4_cols(ov, 2)
+        merged_info[i, 1] = subset_RS4_cols(ov, 1)
+        merged_info[i, 2] = subset_RS4_cols(ov, 2)
 
         # print(subset_RS4_cols(ov, 1), 'subset_RS4_cols(ov, 1)')
         # print(subset_RS4_cols(ov, 2), 'subset_RS4_cols(ov, 2)')
-        info1 = subset_RS4_rows(indata["peak_info"]["reverse"],
+        info1 = subset_RS4_rows(indata["reverse", i, "peak_info"],
                                 subset_RS4_cols(ov, 1))
-        info2 = subset_RS4_rows(indata["peak_info"]["forward"],
+        info2 = subset_RS4_rows(indata["forward", i, "peak_info"],
                                 subset_RS4_cols(ov, 2))
-        # print("info1 " * 100)
-        # print(info1)
-        # print("info2 " * 100)
-        # print(info2)
-        # raise
-        #                         )
-        # print(info1)
 
-        #info1 <- PEAK.INFO[[type]][[1]][[i]][ov[,1],]
-        #info2 <- PEAK.INFO[[type]][[2]][[i]][ov[,2],]
-        #peak.locs <- as.integer(round((info1$PEAK.LOC + info2$PEAK.LOC)/2))
+        peak_locs = r(
+            "function(info1, info2) as.integer(round((info1$PEAK.LOC + info2$PEAK.LOC)/2))")(
+                info1, info2)
+        peak_cvg = r("function(info1, info2) info1$PEAK.CVG + info2$PEAK.CVG")(
+            info1, info2)
+        peak_surL = r(
+            "function(info1, info2) info1$PEAK.SURL + info2$PEAK.SURL")(info1,
+                                                                        info2)
+        peak_surR = r(
+            "function(info1, info2) info1$PEAK.SURR + info2$PEAK.SURR")(info1,
+                                                                        info2)
 
-        #peak.cvg <- info1$PEAK.CVG + info2$PEAK.CVG
-        #peak.surL <- info1$PEAK.SURL + info2$PEAK.SURL
-        #peak.surR <- info1$PEAK.SURR + info2$PEAK.SURR
+        _compute_z = r('''function(i, peak.cvg, peak.surL, peak.surR) {
+        switch(i,
+               {zscores <- zscore(peak.cvg, peak.surL+peak.surR,2)
+                max.z <- zscore(peak.cvg+peak.surL+peak.surR,0,2)},
+               {zscores <- zscore(peak.cvg, peak.surL)
+                max.z <- zscore(peak.cvg+peak.surL,0)},
+               {zscores <- zscore(peak.cvg, peak.surR)
+                max.z <- zscore(peak.cvg+peak.surR,0)})
+        list(zscores, max.z)
+        }
+        ''')
 
-        #switch(i,
-        #			 {zscores <- zscore(peak.cvg, peak.surL+peak.surR,2)
-        #				max.z <- zscore(peak.cvg+peak.surL+peak.surR,0,2)},
-        #			 {zscores <- zscore(peak.cvg, peak.surL)
-        #				max.z <- zscore(peak.cvg+peak.surL,0)},
-        #			 {zscores <- zscore(peak.cvg, peak.surR)
-        #				max.z <- zscore(peak.cvg+peak.surR,0)})
+        l = _compute_z(i, peak_cvg, peak_surL, peak_surR)
+        zscores, maxz = l
 
-        #peak.nlps <- -pnorm(zscores, low=FALSE, log=TRUE)/log(10)
-        #max.nlps <- -pnorm(max.z, low=FALSE, log=TRUE)/log(10)
+        peak_nlps = r(
+            "function(zscores) -pnorm(zscores, low=FALSE, log=TRUE)/log(10)")(
+                zscores)
+        max_nlps = r(
+            "function(max.z) -pnorm(max.z, low=FALSE, log=TRUE)/log(10)")(maxz)
+        print(peak_nlps)
+        print(max_nlps)
 
-        #dfr <- data.frame(NLP=peak.nlps, MAX.NLP=max.nlps, LOC=peak.locs,
-        #									WIDTH=width(peaks), START=start(peaks), END=end(peaks),
-        #									CVG=peak.cvg, SURL=peak.surL, SURR=peak.surR, FORM=i)
+        dfr = r(
+            """function(peak.nlps, max.nlps, peak.locs, peaks, peak.cvg, peak.surL, peak.surR, i, CHR) {
 
-        #rownames(dfr) <- with(dfr,sprintf("%s:%d-%d:%d",CHR,START,END,FORM))
-        #PEAK.INFO[[type]][[direction]][[i]] <<- dfr
-        #N.PEAKS <<- N.PEAKS + n.peaks
-        #
-        # }
+            dfr = data.frame(NLP=peak.nlps, MAX.NLP=max.nlps, LOC=peak.locs,
+                                                WIDTH=width(peaks), START=start(peaks), END=end(peaks),
+                                                CVG=peak.cvg, SURL=peak.surL, SURR=peak.surR, FORM=i)
+            rownames(dfr) <- with(dfr,sprintf("%s:%d-%d:%d",CHR,START,END,FORM))
+            dfr
+            }""")(peak_nlps, max_nlps, peak_locs, peaks, peak_cvg, peak_surL,
+                  peak_surR, i, chromosome)
+        number_peaks += n_peaks
+        merged_info[i] = dfr
+    return merged_peaks, merged_info

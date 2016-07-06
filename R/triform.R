@@ -179,18 +179,13 @@ test.chr <- function(chr,
     list(values=runValue(rle), lengths=runLength(rle))
   }
 
-  ## print(TARGET.NAMES)
 	for(type in TARGET.NAMES)  {
-    ## print("type")
-    ## print(type)
     PEAKS[[type]] <<- list()
     PEAK.INFO[[type]] <<- list()
     CENTER.CVG[[type]] <<- list()
 		is.type <- grepl(type, CVG.NAMES)
 
 		for(direction in DIRECTIONS){
-      ## print("direction")
-      ## print(direction)
 			PEAKS[[type]][[direction]] <<- list(IRanges(),IRanges(),IRanges())
 			PEAK.INFO[[type]][[direction]] <<- list(NULL,NULL,NULL)
 
@@ -212,7 +207,6 @@ test.chr <- function(chr,
 			CENTER.CVG[[type]][[direction]] <<- cvg
       cvg.df = rle_to_df(cvg)
       ## write.table(cvg.df,paste("tests/test_data/chromosome_cvg", paste0(tolower(direction), ".csv"), sep="_") )
-      ## print(cvg)
 
 			# Form-1 test with consistency check
 			signs1 <- sign(2*cvg1-surL1-surR1)
@@ -251,8 +245,6 @@ test.chr <- function(chr,
 			cvg.size <- cvg1.size + cvg2.size
 			ratio1 <- ref.size/cvg1.size
 			ratio2 <- ref.size/cvg2.size
-      ## print(ref.size)
-      ## print(cvg.size)
 			ratio <- ref.size/cvg.size
 
 			signs1 <- sign(ratio1*cvg1-ref)
@@ -296,12 +288,9 @@ test.chr <- function(chr,
 			zscores.list <- list(zscores1,zscores2,zscores3)
 			zviews.list <- mapply(function(x,y) Views(x,y),
 														x=zscores.list, y=peaks.list)
-      ## print(typeof(zviews.list))
 			maxz.list <- lapply(zviews.list, viewMaxs)
 
 			for(i in 1:3) {	# separate analyses of different peak forms
-        ## print("i")
-        ## print(i)
 				peaks <- peaks.list[[i]]
 
 				if(!length(peaks)) next
@@ -326,32 +315,15 @@ test.chr <- function(chr,
         ## write.table(peak.locs, "peak_locs_r")
 				peak.nlps <- peak.nlps[ok]
 
-        ## print("length(ok)")
-        ## print(length(ok))
-
-        ## print("length(peak.locs)")
-        ## print(length(peak.locs))
 
 
-        ## print("length(peak.nlps)")
-        ## print(length(peak.nlps))
+
 
 				peak.cvg <- peak.cvg[ok]
-        ## print("surL")
-        ## print(surL)
-        ## print("length(surL)")
-        ## print(length(surL))
 				peak.surL <- surL[peak.locs,drop=TRUE]
-        ## print("peak.surL")
-        ## print(peak.surL)
-        ## print("length(peak.surL)")
-        ## print(length(peak.surL))
 				peak.surR <- surR[peak.locs,drop=TRUE]
 
 				PEAKS[[type]][[direction]][[i]] <<- peaks
-        ## print(peaks)
-        ## print("peaks")
-        ## peak_df = as.data.frame(peaks)
         ## write.table()
 				n.peaks <- length(peaks)
 				dfr <- data.frame(PEAK.LOC=peak.locs, PEAK.CVG=peak.cvg,
@@ -359,7 +331,7 @@ test.chr <- function(chr,
 													PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
 													PEAK.START=start(peaks), PEAK.END=end(peaks))
 				PEAK.INFO[[type]][[direction]][[i]] <<- dfr
-        ## write.table(dfr, paste("tests/test_data/chromosome_result", paste0(tolower(direction), i, ".csv"), sep="_"), sep=" ")
+        write.table(dfr, paste("tests/test_data/chromosome_result", paste0(tolower(direction), i, ".csv"), sep="_"), sep=" ")
 			}
 
     }
@@ -376,16 +348,9 @@ test.chr <- function(chr,
 		for (i in 1:3) {
 			p1 <- PEAKS[[type]][[1]][[i]]
 			p2 <- PEAKS[[type]][[2]][[i]]
-      print("i")
-      print(i)
-      print("p1")
-      print(p1)
-      print("p2")
-      print(p2)
 			if(!length(p1) | !length(p2)) next
 
 			ov <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
-      print(ov)
 			if(!nrow(ov)) next
 
 			dup1 <- (ov[,1] %in% ov[duplicated(ov[,1]),1])
@@ -396,8 +361,6 @@ test.chr <- function(chr,
 
 			p1 <- p1[1:length(p1) %in% ov[,1]]
 			p2 <- p2[1:length(p2) %in% ov[,2]]
-      ## print(p1)
-      ## print(p2)
 			peaks <- IRanges(start=pmin(start(p1),start(p2)),
 											 end=pmax(end(p1),end(p2)))
 
@@ -424,17 +387,12 @@ test.chr <- function(chr,
 			n.peaks <- length(peaks)
 			PEAKS[[type]][[direction]][[i]] <<- peaks
 
-      ## print("ov[,1]")
-      ## print(ov[,1])
-      ## print("ov[,2]")
-      ## print(ov[,2])
+      ## peaks.df = rle_to_df(peaks)
+      write.table(peaks, paste("tests/test_data/merge_peaks", paste0(i, ".csv"), sep="_"), sep=" ")
+
 
 			info1 <- PEAK.INFO[[type]][[1]][[i]][ov[,1],]
 			info2 <- PEAK.INFO[[type]][[2]][[i]][ov[,2],]
-      ## print("info1")
-      ## print(info1)
-      ## print("info2")
-      ## print(info2)
 			peak.locs <- as.integer(round((info1$PEAK.LOC + info2$PEAK.LOC)/2))
 
 			peak.cvg <- info1$PEAK.CVG + info2$PEAK.CVG
@@ -452,20 +410,20 @@ test.chr <- function(chr,
 			peak.nlps <- -pnorm(zscores, low=FALSE, log=TRUE)/log(10)
 			max.nlps <- -pnorm(max.z, low=FALSE, log=TRUE)/log(10)
 
+
 			dfr <- data.frame(NLP=peak.nlps, MAX.NLP=max.nlps, LOC=peak.locs,
 												WIDTH=width(peaks), START=start(peaks), END=end(peaks),
 												CVG=peak.cvg, SURL=peak.surL, SURR=peak.surR, FORM=i)
 
 			rownames(dfr) <- with(dfr,sprintf("%s:%d-%d:%d",CHR,START,END,FORM))
 			PEAK.INFO[[type]][[direction]][[i]] <<- dfr
-      print("dfr")
-      print(dfr)
 
       ## write.table(dfr, paste("tests/test_data/find_peaks_result", paste0(i, ".csv"), sep="_"), sep=" ")
 			N.PEAKS <<- N.PEAKS + n.peaks
 		}
 	}
   ## print(PEAK.INFO)
+stop("Endre Endre Endre")
 }
   ## for(type in TARGET.NAMES)  {
   ##   PEAKS[[type]] <<- list()
