@@ -51,7 +51,7 @@ def test_init_treatment(expected_result_chip, input_data_treatment, args):
     assert all(asserts)
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_init_background(expected_result_input, input_data_control, args):
 
     results_control = _init(input_data_control, True, args)

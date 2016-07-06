@@ -422,9 +422,62 @@ test.chr <- function(chr,
 			N.PEAKS <<- N.PEAKS + n.peaks
 		}
 	}
-  ## print(PEAK.INFO)
-stop("Endre Endre Endre")
+
+	if(!N.PEAKS) return()
+# exclude redundant Form-2 and Form-3 peaks
+	p1 <- PEAKS[[type]][[direction]][[1]]
+	p2 <- PEAKS[[type]][[direction]][[2]]
+	p3 <- PEAKS[[type]][[direction]][[3]]
+
+  print(p1)
+	ov12 <- matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)
+	if(!!nrow(ov12)) {
+		ex2 <- (1:length(p2) %in% ov12[,2])
+		p2 <- p2[!ex2]
+		PEAKS[[type]][[direction]][[2]] <<- p2
+		info <- PEAK.INFO[[type]][[direction]][[2]][!ex2,,drop=FALSE]
+		PEAK.INFO[[type]][[direction]][[2]] <<- info
+	}
+  print(PEAKS[[type]][[direction]][[2]])
+  print(PEAK.INFO[[type]][[direction]][[2]])
+
+	ov13 <- matrix(as.matrix(findOverlaps(p1,p3)),ncol=2)
+	if(!!nrow(ov13)) {
+		ex3 <- (1:length(p3) %in% ov13[,2])
+		p3 <- p3[!ex3]
+		PEAKS[[type]][[direction]][[3]] <<- p3
+		info <- PEAK.INFO[[type]][[direction]][[3]][!ex3,,drop=FALSE]
+		PEAK.INFO[[type]][[direction]][[3]] <<- info
+	}
+
+
+# exclude overlapping Form-2 and Form-3 peaks
+	ov23 <- matrix(as.matrix(findOverlaps(p2,p3,maxgap=100)),ncol=2)
+	if(!!nrow(ov23)) {
+		ex2 <- (1:length(p2) %in% ov23[,1])
+		p2 <- p2[!ex2]
+		PEAKS[[type]][[direction]][[2]] <<- p2
+		info <- PEAK.INFO[[type]][[direction]][[2]][!ex2,,drop=FALSE]
+		PEAK.INFO[[type]][[direction]][[2]] <<- info
+
+		ex3 <- (1:length(p3) %in% ov23[,2])
+		p3 <- p3[!ex3]
+		PEAKS[[type]][[direction]][[3]] <<- p3
+		info <- PEAK.INFO[[type]][[direction]][[3]][!ex3,,drop=FALSE]
+		PEAK.INFO[[type]][[direction]][[3]] <<- info
+	}
+  print(PEAK.INFO[[type]][[direction]][[3]])
+  print(PEAKS[[type]][[direction]][[3]])
+	peak.info <- rbind(PEAK.INFO[[type]][[direction]][[1]],
+										 PEAK.INFO[[type]][[direction]][[2]],
+										 PEAK.INFO[[type]][[direction]][[3]])
+	N.PEAKS <<- nrow(peak.info)
+  print(peak.info)
+	peak.info
+
 }
+
+  ## print(PEAK.INFO)
   ## for(type in TARGET.NAMES)  {
   ##   PEAKS[[type]] <<- list()
   ##   PEAK.INFO[[type]] <<- list()

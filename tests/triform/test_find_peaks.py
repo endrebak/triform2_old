@@ -62,11 +62,10 @@ def expected_result():
         peaks = pd.read_table("tests/test_data/merge_peaks_%s.csv" % peak_type,
                               sep=" ")
         results["peaks", peak_type] = peaks
-
     return results
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_find_peaks(input_data, expected_result, args):
     peaks, info = _find_peaks(input_data["chrY"], "chrY", args)
 
@@ -113,7 +112,6 @@ def _find_peaks(indata, chromosome, args):
     for i in range(1, 4):
         p1 = indata["reverse", i]
         p2 = indata["forward", i]
-        print(i)
         # TODO:
         # if(!length(p1) | !length(p2)) next
 
@@ -175,8 +173,6 @@ def _find_peaks(indata, chromosome, args):
         merged_info[i, 1] = subset_RS4_cols(ov, 1)
         merged_info[i, 2] = subset_RS4_cols(ov, 2)
 
-        # print(subset_RS4_cols(ov, 1), 'subset_RS4_cols(ov, 1)')
-        # print(subset_RS4_cols(ov, 2), 'subset_RS4_cols(ov, 2)')
         info1 = subset_RS4_rows(indata["reverse", i, "peak_info"],
                                 subset_RS4_cols(ov, 1))
         info2 = subset_RS4_rows(indata["forward", i, "peak_info"],
@@ -214,8 +210,6 @@ def _find_peaks(indata, chromosome, args):
                 zscores)
         max_nlps = r(
             "function(max.z) -pnorm(max.z, low=FALSE, log=TRUE)/log(10)")(maxz)
-        print(peak_nlps)
-        print(max_nlps)
 
         dfr = r(
             """function(peak.nlps, max.nlps, peak.locs, peaks, peak.cvg, peak.surL, peak.surR, i, CHR) {

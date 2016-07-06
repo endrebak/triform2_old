@@ -32,7 +32,7 @@ def expected_result_treatment(chromosome_cover_results_chip):
     return treatment
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_preprocess(args, expected_result_treatment, expected_result_control):
     treatment, control, treatment_sizes, control_sizes = preprocess(args)
 
