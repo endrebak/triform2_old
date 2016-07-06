@@ -53,3 +53,10 @@ def rle_to_df(rle):
     """)
 
     return _rle_to_df(rle)
+
+
+def df_to_iranges(df):
+
+    return r("""function(df) {
+    IRanges(start=as.integer(df[[1]]), end=as.integer(df[[2]]), width=as.integer(df[[3]]))}
+    """)(df)

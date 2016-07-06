@@ -13,8 +13,8 @@ importr("GenomicRanges")
 importr("S4Vectors")
 from triform.init import _init
 from triform.chromosome import chromosome
-from triform.helper_functions import (subset_RS4, subset_RS4_rows,
-                                      subset_RS4_cols)
+from triform.helper_functions import (
+    subset_RS4, subset_RS4_rows, subset_RS4_cols, df_to_iranges, df_to_rle)
 
 
 @pytest.fixture
@@ -22,43 +22,62 @@ def input_data():
 
     results = defaultdict(dict)
     for peak_type, direction in product([1, 2, 3], ["reverse", "forward"]):
-        df = r["read.table"]("tests/test_data/{}_peaks_{}.csv".format(
-            peak_type, direction),
-                             sep=" ")
-        gr = r["IRanges"](start=df[0], end=df[1])
-        results[direction][peak_type] = gr
 
-    for direction in ["reverse", "forward"]:
-        df = r["read.table"]("tests/test_data/cvg_{}.csv".format(direction),
+        df = r["read.table"]("tests/test_data/chromosome_result_%s%s.csv" % (
+            direction, peak_type),
                              sep=" ")
-        results["cvg"][direction] = r["Rle"](df[0], df[1])
-        results["peak_info"][direction] = r["read.table"](
-            "tests/test_data/test_chromosome_{}_expected.csv".format(
-                direction),
-            sep=" ")
+        df = r('function(df) df[c("PEAK.START", "PEAK.END", "PEAK.WIDTH")]')(
+            df)
+        iranges = df_to_iranges(df)
+
+        results["chrY"][direction, peak_type] = iranges
+
+    for direction in "reverse forward".split():
+        df = r["read.table"]("tests/test_data/chromosome_cvg_%s.csv" %
+                             direction)
+        results["chrY"][direction, "cvg"] = df_to_rle(df)
 
     return results
 
 
-@pytest.mark.unit
-def test_find_peaks(input_data, args):
-    pass
-    # find_peaks(input_data, args)
+@pytest.fixture
+def expected_result():
 
-    # assert 0
+    results = {}
+    for peak_type in range(1, 4):
+
+        df = r["read.table"]("tests/test_data/find_peaks_result_%s.csv" %
+                             peak_type,
+                             sep=" ")
+        results[peak_type] = df
+
+    return df
 
 
-def find_peaks(result, args):
+@pytest.mark.current
+def test_find_peaks(input_data, expected_result, args):
+    peaks = _find_peaks(input_data["chrY"], args)
+
+    assert expected_result[1] == peaks[1]
+    assert 0
+
+
+def _find_peaks(indata, args):
 
     merged_peaks = {}
     merged_info = {}
 
-    pos_cvg = result["cvg"]["forward"]
-    neg_cvg = result["cvg"]["reverse"]
+    pos_cvg = indata["forward", "cvg"]
+    neg_cvg = indata["reverse", "cvg"]
 
     for i in range(1, 4):
-        p1 = result["reverse"][i]
-        p2 = result["forward"][i]
+        p1 = indata["reverse", i]
+        p2 = indata["forward", i]
+        print(i)
+        print("p1")
+        print(p1)
+        print("p2")
+        print(p2)
 
         # TODO:
         # if(!length(p1) | !length(p2)) next
@@ -121,17 +140,17 @@ def find_peaks(result, args):
         merged_info["reverse"] = subset_RS4_cols(ov, 1)
         merged_info["forward"] = subset_RS4_cols(ov, 2)
 
-        print(subset_RS4_cols(ov, 1), 'subset_RS4_cols(ov, 1)')
-        print(subset_RS4_cols(ov, 2), 'subset_RS4_cols(ov, 2)')
-        info1 = subset_RS4_rows(result["peak_info"]["reverse"],
+        # print(subset_RS4_cols(ov, 1), 'subset_RS4_cols(ov, 1)')
+        # print(subset_RS4_cols(ov, 2), 'subset_RS4_cols(ov, 2)')
+        info1 = subset_RS4_rows(indata["peak_info"]["reverse"],
                                 subset_RS4_cols(ov, 1))
-        info2 = subset_RS4_rows(result["peak_info"]["forward"],
+        info2 = subset_RS4_rows(indata["peak_info"]["forward"],
                                 subset_RS4_cols(ov, 2))
-        print("info1 " * 100)
-        print(info1)
-        print("info2 " * 100)
-        print(info2)
-        raise
+        # print("info1 " * 100)
+        # print(info1)
+        # print("info2 " * 100)
+        # print(info2)
+        # raise
         #                         )
         # print(info1)
 
