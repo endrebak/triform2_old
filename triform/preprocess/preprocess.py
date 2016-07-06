@@ -22,5 +22,10 @@ def _preprocess(files, args):
 
     # print(ranged_data_per_file.keys(), 'ranged_data_per_file.keys()')
     chrcovers, sizes = make_chromosome_cover_files(ranged_data_per_file, args)
-    # print(chrcovers["chrY"].keys(), 'chrcovers["chrY"].keys()')
-    return chrcovers, sizes
+
+    py_sizes = defaultdict(dict)
+    for c, d in sizes.items():
+        for k, d2 in d.items():
+            py_sizes[c][k] = int(d2[0])
+
+    return chrcovers, py_sizes

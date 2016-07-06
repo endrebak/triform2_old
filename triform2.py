@@ -13,6 +13,7 @@ from rpy2.robjects import r
 from triform.version import __version__
 from triform.preprocess.preprocess import preprocess
 from triform.init import init
+from triform.chromosome import chromosome
 
 parser = argparse.ArgumentParser(
     description=
@@ -128,12 +129,23 @@ if __name__ == '__main__':
 
     treatment, control, treatment_sizes, control_sizes = preprocess(args)
 
+    print(treatment_sizes, control_sizes)
     for k, v in treatment.items():
         print(k)
         print(v)
         print(type(v))
     init_treatment = init(treatment, False, args)
-    print(init_treatment)
-    init_control = init(control, False, args)
+    init_control = init(control, True, args)
+    print(init_treatment.keys())
+    chromosome(init_treatment, init_control, treatment_sizes, control_sizes,
+               args)
 
-    rpy2.robjects.r["save"](treatment[0], file="chrcovers.RData")
+    print(init_treatment.keys(), "init_treatment.keys()")
+    print(init_control.keys(), "init_control.keys()")
+
+    # for k, v in init_treatment.items():
+    #     print(k)
+    #     print(v)
+    # print(init_treatment)
+
+    # rpy2.robjects.r["save"](treatment[0], file="chrcovers.RData")

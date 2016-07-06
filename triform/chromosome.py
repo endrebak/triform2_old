@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 
+from itertools import product
 from collections import defaultdict
 
 from rpy2.robjects import r, pandas2ri
@@ -50,6 +51,7 @@ def compute_ok4(ratios, center, input):
         s = r["sign"](r["-"](scaled_center, input))
         pos = r["=="](1, s)
         signs.append(pos)
+
     return r["Reduce"]("*", signs)
 
 
@@ -127,16 +129,61 @@ def compute_peaks_and_zscores(cvg, center, left, right, chip, input, ratios,
     return _peaks, _zscores
 
 
-#
-def chromosome(chip, input, chip_sizes, input_size, args):
+def transform_input_data(data):
+
+    chromosome_dict = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(dict)))
+    for chromosome, d in data.items():
+        for (infile, direction, location), v in d.items():
+            chromosome_dict[chromosome][direction][infile][location] = v
+
+    return chromosome_dict
+
+
+def transform_input_sizes(sizes):
+
+    chromosome_dict = defaultdict(lambda: defaultdict(dict))
+    for chromosome, d in sizes.items():
+        for (infile, direction), v in d.items():
+            chromosome_dict[chromosome][direction][infile] = v
+
+    return chromosome_dict
+
+
+def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
+
+    chip_data = transform_input_data(chip_data)
+    input_data = transform_input_data(input_data)
+
+    chip_sizes = transform_input_sizes(chip_sizes)
+    input_sizes = transform_input_sizes(input_sizes)
+
+    results = {}
+    for chromosome, direction in product(chip_data.keys(), ["reverse",
+                                                            "forward"]):
+        results[chromosome, direction] = _chromosome(
+            chip_data[chromosome][direction],
+            input_data[chromosome][direction],
+            chip_sizes[chromosome][direction],
+            input_sizes[chromosome][direction], args)
+
+    return results
+
+
+def _chromosome(chip, input, chip_sizes, input_sizes, args):
+
+    "key of type: ('examples/srf_huds_Gm12878_rep1.bed', 'reverse', 'left')"
+
+    "this expects dict where keys file values dict of directions"
+    "collect the data and create desired dict?"
 
     results = defaultdict(dict)
-
+    input = collect_key(input, "center").values()
     input = r["Reduce"]("+", input)
 
-    ratios = compute_ratios(chip_sizes, input_size)
+    ratios = compute_ratios(chip_sizes, sum(input_sizes.values()))
 
-    ratio = input_size / sum(chip_sizes.values())
+    ratio = sum(input_sizes.values()) / sum(chip_sizes.values())
 
     center = collect_key(chip, "center")
     left = collect_key(chip, "left")

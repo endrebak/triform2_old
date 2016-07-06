@@ -18,8 +18,15 @@ from triform.helper_functions import df_to_rle, rle_to_df
 
 @pytest.fixture
 def expected_result():
-    path = "tests/test_results/result_df.csv"
-    return pd.read_table(path, sep=" ")
+    results = defaultdict(dict)
+    for i in range(1, 4):
+        results["chrY", "forward", i] = pd.read_table(
+            "tests/test_data/chromosome_result_forward%s.csv" % i,
+            sep=" ")
+        results["chrY", "reverse", i] = pd.read_table(
+            "tests/test_data/chromosome_result_reverse%s.csv" % i,
+            sep=" ")
+    return results
 
 
 @pytest.fixture
@@ -39,88 +46,58 @@ def expected_result_peaks_zscores():
     return _peaks, _zscores
 
 
-def _create_rle_list(run_length_files):
-
-    # run_lengths = r["list"]()
-    run_lengths = dict()
-    for name, rle in run_length_files.items():
-        df = r["read.table"](rle, sep=" ", header=1)
-        run_lengths[name] = df_to_rle(df)
-
-    return run_lengths
+@pytest.fixture
+def input_sizes(input_sizes):
+    return {"chrY": input_sizes}
 
 
 @pytest.fixture
-def input_data(run_length_encodings_full_rep1_backgr,
-               run_length_encodings_full_rep2_backgr):
-
-    input = defaultdict(list)
-
-    rep1 = _create_rle_list(run_length_encodings_full_rep1_backgr)
-    rep2 = _create_rle_list(run_length_encodings_full_rep2_backgr)
-
-    input["forward"] = [rep1["forward"], rep2["forward"]]
-    input["reverse"] = [rep1["reverse"], rep2["reverse"]]
-
-    return input
+def chip_sizes(chip_sizes):
+    return {"chrY": chip_sizes}
 
 
 @pytest.fixture
-def chip_data(run_length_encodings_full_rep1, run_length_encodings_full_rep2):
+def input_data(run_length_encodings_full_backgr):
 
-    data = defaultdict(dict)
-    data["forward"]["rep1"] = _create_rle_list(run_length_encodings_full_rep1[
-        "forward"])
-    data["forward"]["rep2"] = _create_rle_list(run_length_encodings_full_rep2[
-        "forward"])
-
-    data["reverse"]["rep1"] = _create_rle_list(run_length_encodings_full_rep1[
-        "reverse"])
-    data["reverse"]["rep2"] = _create_rle_list(run_length_encodings_full_rep2[
-        "reverse"])
-
-    return data
+    return {"chrY": {k: df_to_rle(r["read.table"](v,
+                                                  sep=" "))
+                     for (k, v) in run_length_encodings_full_backgr.items()}}
 
 
 @pytest.fixture
-def chip_sizes(sizes_rep1, sizes_rep2):
-    d = defaultdict(dict)
-    d["reverse"]["rep1"] = sizes_rep1["reverse"]
-    d["forward"]["rep1"] = sizes_rep1["forward"]
-    d["reverse"]["rep2"] = sizes_rep2["reverse"]
-    d["forward"]["rep2"] = sizes_rep2["forward"]
-    return d
+def chip_data(run_length_encodings_full):
+
+    return {"chrY": {k: df_to_rle(r["read.table"](v,
+                                                  sep=" "))
+                     for (k, v) in run_length_encodings_full.items()}}
 
 
-@pytest.fixture
-def input_sizes(sizes_rep1_backgr, sizes_rep2_backgr):
-    d = defaultdict(dict)
-    d["reverse"]["rep1"] = sizes_rep1_backgr["reverse"]
-    d["forward"]["rep1"] = sizes_rep1_backgr["forward"]
-    d["reverse"]["rep2"] = sizes_rep2_backgr["reverse"]
-    d["forward"]["rep2"] = sizes_rep2_backgr["forward"]
-    return d
-
-
-@pytest.mark.unit
+@pytest.mark.current
 def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
                     expected_result):
 
-    input_data = input_data["reverse"]
-    input_size = sum(input_sizes["reverse"].values())
-    chip_sizes = chip_sizes["reverse"]
+    results = chromosome(chip_data, input_data, chip_sizes, input_sizes, args)
 
-    chip_data = chip_data["reverse"]
+    results["chrY", "forward"]["peak_info"][1]
+    results["chrY", "forward"]["peak_info"][2]
+    results["chrY", "forward"]["peak_info"][3]
 
-    result = chromosome(chip_data, input_data, chip_sizes, input_size, args)
+    asserts = []
+    for (_chromosome, direction,
+         peak), expected_result in expected_result.items():
+        print(_chromosome, direction, peak)
+        actual_result = ri2py(results[_chromosome, direction]["peak_info"][
+            peak])
+        print(actual_result.head(), "actual_result")
+        print(expected_result.head(), "expected_result")
 
-    result_df = result["peak_info"][1]
-    result_df = ri2py(r["as.data.frame"](result_df)).reset_index(drop=True)
+        print(actual_result.tail(), "actual_result")
+        print(expected_result.tail(), "expected_result")
 
-    for (_, prow), (_, xrow) in izip_longest(result_df.iterrows(),
-                                             expected_result.iterrows()):
-        if not np.allclose(prow, xrow):
-            print(prow, xrow)
-            raise
+        print(actual_result.dtypes, "actual_result")
+        print(expected_result.dtypes, "expected_result")
 
-    assert np.allclose(result_df, expected_result)
+        # Using allclose here, since it does not care about 32/64 differences
+        assert np.allclose(expected_result, actual_result)
+
+    assert all(asserts)

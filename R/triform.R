@@ -163,10 +163,10 @@ test.chr <- function(chr,
                      min.shift=MIN.SHIFT,
                      min.width=MIN.WIDTH,
                      filePath="./chrcovers") {
-  test.init(chr, filePath)
-  save(CVG, file="temp/cvg.RData")
-  save(SIZES, file="temp/sizes.RData")
-  save(CHR, file="temp/chr.RData")
+  ## test.init(chr, filePath)
+  ## save(CVG, file="temp/cvg.RData")
+  ## save(SIZES, file="temp/sizes.RData")
+  ## save(CHR, file="temp/chr.RData")
 
   PEAKS <<- list()
   PEAK.INFO <<- list()
@@ -249,14 +249,15 @@ test.chr <- function(chr,
       print(ref.size)
       print(cvg.size)
 			ratio <- ref.size/cvg.size
-      print(ratio)
 
 			signs1 <- sign(ratio1*cvg1-ref)
 			signs2 <- sign(ratio2*cvg2-ref)
+      ## if (direction == "FORWARD") stop(direction)
 			ok <- (signs1==1)*(signs2==1)
 
 			zscores4 <- zscore(cvg,ref,ratio) * ok
       peaks4 <- slice(zscores4,lower=min.z)
+
       ## write.table(peaks4, "peaks4_r")
 			peaks4 <- peaks4[width(peaks4)>min.width]
 			p4 <- as(peaks4,"IRanges")
@@ -279,13 +280,13 @@ test.chr <- function(chr,
       ## z1 = rle_to_df(zscores1)
       ## z2 = rle_to_df(zscores2)
       ## z3 = rle_to_df(zscores3)
-      ## write.table(z1, "tests/test_results/z1.csv", sep=" ")
-      ## write.table(z2, "tests/test_results/z2.csv", sep=" ")
-      ## write.table(z3, "tests/test_results/z3.csv", sep=" ")
+      ## write.table(z1, "tests/test_data/z1.csv", sep=" ")
+      ## write.table(z2, "tests/test_data/z2.csv", sep=" ")
+      ## write.table(z3, "tests/test_data/z3.csv", sep=" ")
 
-      ## write.table(p1, "tests/test_results/p1.csv", sep=" ")
-      ## write.table(p2, "tests/test_results/p2.csv", sep=" ")
-      ## write.table(p3, "tests/test_results/p3.csv", sep=" ")
+      ## write.table(p1, "tests/test_data/p1.csv", sep=" ")
+      ## write.table(p2, "tests/test_data/p2.csv", sep=" ")
+      ## write.table(p3, "tests/test_data/p3.csv", sep=" ")
 			peaks.list <- list(p1,p2,p3)
 			zscores.list <- list(zscores1,zscores2,zscores3)
 			zviews.list <- mapply(function(x,y) Views(x,y),
@@ -349,7 +350,7 @@ test.chr <- function(chr,
 													PEAK.NLP=round(peak.nlps,3), PEAK.WIDTH=width(peaks),
 													PEAK.START=start(peaks), PEAK.END=end(peaks))
 				PEAK.INFO[[type]][[direction]][[i]] <<- dfr
-        write.table(dfr, "dfr_r", sep=" ")
+        write.table(dfr, paste("tests/test_data/chromosome_result", paste0(tolower(direction), i, ".csv"), sep="_"), sep=" ")
 			}
 
     }
@@ -419,8 +420,6 @@ test.chr <- function(chr,
       print(info1)
       print("info2")
       print(info2)
-      stop()
-      stop("Endre Endre Endre")
 			peak.locs <- as.integer(round((info1$PEAK.LOC + info2$PEAK.LOC)/2))
 
 			peak.cvg <- info1$PEAK.CVG + info2$PEAK.CVG
@@ -448,7 +447,6 @@ test.chr <- function(chr,
 		}
 	}
   print(PEAK.INFO)
-  stop("Endre Endre Endre")
 }
   ## for(type in TARGET.NAMES)  {
   ##   PEAKS[[type]] <<- list()
@@ -723,7 +721,6 @@ test.init <- function(chr, filePath="./chrcovers") {
   maxlen <- max(sapply(CVG,length))
   print("maxlen")
   print(maxlen)
-  stop("Endre Endre Endre")
   print(CVG)
   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
   names(SIZES) <<- CVG.NAMES

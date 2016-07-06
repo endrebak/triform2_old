@@ -51,29 +51,43 @@ def run_length_encodings():
 
 
 @pytest.fixture(scope="session")
-def run_length_encodings_full_rep1():
-    return {"forward": {"center": "examples/rle_full/rep1_forward_center.csv",
-                        "left": "examples/rle_full/rep1_forward_left.csv",
-                        "right": "examples/rle_full/rep1_forward_right.csv"},
-            "reverse": {"center": "examples/rle_full/rep1_reverse_center.csv",
-                        "left": "examples/rle_full/rep1_reverse_left.csv",
-                        "right": "examples/rle_full/rep1_reverse_right.csv"}}
+def run_length_encodings_full():
+    return {("examples/srf_huds_Gm12878_rep1.bed", "forward", "center"):
+            "tests/test_data/rep1_forward_center.csv",
+            ("examples/srf_huds_Gm12878_rep1.bed", "forward", "left"):
+            "tests/test_data/rep1_forward_left.csv",
+            ("examples/srf_huds_Gm12878_rep1.bed", "forward", "right"):
+            "tests/test_data/rep1_forward_right.csv",
+            ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "center"):
+            "tests/test_data/rep1_reverse_center.csv",
+            ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "left"):
+            "tests/test_data/rep1_reverse_left.csv",
+            ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "right"):
+            "tests/test_data/rep1_reverse_right.csv",
+            ("examples/srf_huds_Gm12878_rep2.bed", "forward", "center"):
+            "tests/test_data/rep2_forward_center.csv",
+            ("examples/srf_huds_Gm12878_rep2.bed", "forward", "left"):
+            "tests/test_data/rep2_forward_left.csv",
+            ("examples/srf_huds_Gm12878_rep2.bed", "forward", "right"):
+            "tests/test_data/rep2_forward_right.csv",
+            ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "center"):
+            "tests/test_data/rep2_reverse_center.csv",
+            ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "left"):
+            "tests/test_data/rep2_reverse_left.csv",
+            ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "right"):
+            "tests/test_data/rep2_reverse_right.csv"}
 
 
 @pytest.fixture(scope="session")
-def run_length_encodings_full_rep2():
-    return {"forward": {"center": "examples/rle_full/rep2_forward_center.csv",
-                        "left": "examples/rle_full/rep2_forward_left.csv",
-                        "right": "examples/rle_full/rep2_forward_right.csv"},
-            "reverse": {"center": "examples/rle_full/rep2_reverse_center.csv",
-                        "left": "examples/rle_full/rep2_reverse_left.csv",
-                        "right": "examples/rle_full/rep2_reverse_right.csv"}}
-
-
-@pytest.fixture(scope="session")
-def run_length_encodings_full_rep1_backgr():
-    return {"forward": "examples/rle_full/backgr_rep1_forward_center.csv",
-            "reverse": "examples/rle_full/backgr_rep1_reverse_center.csv"}
+def run_length_encodings_full_backgr():
+    return {("examples/backgr_huds_Gm12878_rep1.bed", "forward", "center"):
+            "tests/test_data/backgr_rep1_forward_center.csv",
+            ("examples/backgr_huds_Gm12878_rep1.bed", "reverse", "center"):
+            "tests/test_data/backgr_rep1_reverse_center.csv",
+            ("examples/backgr_huds_Gm12878_rep2.bed", "forward", "center"):
+            "tests/test_data/backgr_rep2_forward_center.csv",
+            ("examples/backgr_huds_Gm12878_rep2.bed", "reverse", "center"):
+            "tests/test_data/backgr_rep2_reverse_center.csv"}
 
 
 @pytest.fixture(scope="session")
@@ -83,23 +97,19 @@ def run_length_encodings_full_rep2_backgr():
 
 
 @pytest.fixture(scope="session")
-def sizes_rep1():
-    return {"forward": 8986, "reverse": 8688}
+def chip_sizes():
+    return {("examples/srf_huds_Gm12878_rep1.bed", "forward"): 8986,
+            ("examples/srf_huds_Gm12878_rep1.bed", "reverse"): 8688,
+            ("examples/srf_huds_Gm12878_rep2.bed", "forward"): 8528,
+            ("examples/srf_huds_Gm12878_rep2.bed", "reverse"): 8334}
 
 
 @pytest.fixture(scope="session")
-def sizes_rep2():
-    return {"forward": 8528, "reverse": 8334}
-
-
-@pytest.fixture(scope="session")
-def sizes_rep1_backgr():
-    return {"forward": 7685, "reverse": 7798}
-
-
-@pytest.fixture(scope="session")
-def sizes_rep2_backgr():
-    return {"forward": 8414, "reverse": 8214}
+def input_sizes():
+    return {("examples/backgr_huds_Gm12878_rep1.bed", "forward"): 7685,
+            ("examples/backgr_huds_Gm12878_rep1.bed", "reverse"): 7798,
+            ("examples/backgr_huds_Gm12878_rep2.bed", "forward"): 8414,
+            ("examples/backgr_huds_Gm12878_rep2.bed", "reverse"): 8214}
 
 #    7685 examples/backgr_huds_Gm12878_rep1.bed:chrY
 #    8414 examples/backgr_huds_Gm12878_rep2.bed:chrY
