@@ -1,7 +1,9 @@
+import sys
 import pytest
 from numpy import allclose, int64
 import pandas as pd
 from io import StringIO
+from collections import defaultdict
 
 from rpy2 import robjects as ro
 from rpy2.robjects import r, pandas2ri
@@ -33,26 +35,30 @@ def expected_result_treatment(chromosome_cover_results_chip):
 @pytest.fixture
 def indata_chip(indata_make_chromosome_cover_files_chip, args):
 
-    d = {}
+    d = defaultdict(dict)
     for k, v in indata_make_chromosome_cover_files_chip.items():
-        df = r["read.table"](v, sep=" ")
+        df = r["read.table"](
+            v,
+            sep=" ",
+            col_names=["chromosome", "start", "end", "strand"])
         rd = r["as"](df, "GRanges")
-        d[k] = rd
+        d["chrY"][k] = rd
 
     return d
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_make_chromosome_cover_files_chip(indata_chip,
                                           expected_result_treatment, args):
     cvgs, sizes = make_chromosome_cover_files(indata_chip, args)
 
-    print(expected_result_treatment.keys(), "expected_result_treatment")
-    print(cvgs.keys(), "cvgs")
-    assert set(cvgs.keys()) == set(expected_result_treatment.keys(
-    )), "Keys not equal!"
+    sys.stdout = sys.stderr
 
-    for k, v in cvgs.items():
+    print(expected_result_treatment.keys(), "expected_result_treatment")
+    for (f, direction), v in expected_result_treatment.items():
+        print(v, "v" * 100)
+        print(cvgs[f]["chrY", direction], 'cvgs[f]["chrY",' + direction + ']')
+        assert 0
         actual = ri2py(rle_to_df(v)).astype(int64)
         print("actual")
         print(actual)

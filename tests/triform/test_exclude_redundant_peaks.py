@@ -48,7 +48,7 @@ def input_data():
     return results
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_exclude_redundant_peaks(input_data, expected_result):
 
     result = exclude_redundant_peaks(input_data)

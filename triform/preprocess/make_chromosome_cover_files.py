@@ -1,3 +1,4 @@
+import sys
 from collections import OrderedDict, defaultdict
 from joblib import Parallel, delayed
 
@@ -10,9 +11,14 @@ from triform.helper_functions import subset_RS4_2
 
 def make_chromosome_cover_files(ranged_data_per_file, args):
 
+    # sys.stdout = sys.stderr
     cvgs = defaultdict(dict)
     sizes = defaultdict(dict)
+    # print(ranged_data_per_file, "ranged_data_per_file")
+    print(ranged_data_per_file.keys(), "ranged_data_per_file.keys()")
     for f, chromosome_granges in ranged_data_per_file.items():
+        # print(f, "f")
+        # print(chromosome_granges, "chromosome_granges")
 
         ranged_data = Parallel(n_jobs=args.number_cores)(
             delayed(_make_chromosome_cover_files)(df, args)
@@ -21,6 +27,9 @@ def make_chromosome_cover_files(ranged_data_per_file, args):
         assert len(ranged_data) == len(chromosome_granges)
 
         for c, (cvg, size) in zip(chromosome_granges.keys(), ranged_data):
+            print(c, "c")
+            print(cvg, "cvg")
+            print(size, "size")
 
             cvgs[c][f, "forward"] = cvg["+"]
             cvgs[c][f, "reverse"] = cvg["-"]

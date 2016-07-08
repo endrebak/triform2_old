@@ -311,13 +311,12 @@ test.chr <- function(chr,
 				if(!any(ok)) next
 
 				peaks <- peaks[ok]
+        print(direction)
+        print(i)
+        print(peaks)
 				peak.locs <- peak.locs[ok]
         ## write.table(peak.locs, "peak_locs_r")
 				peak.nlps <- peak.nlps[ok]
-
-
-
-
 
 				peak.cvg <- peak.cvg[ok]
 				peak.surL <- surL[peak.locs,drop=TRUE]

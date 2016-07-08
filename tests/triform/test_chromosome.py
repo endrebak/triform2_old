@@ -88,15 +88,16 @@ def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
         print(_chromosome, direction, peak)
         actual_result = ri2py(results[_chromosome, direction]["peak_info"][
             peak])
-        print(actual_result.head(), "actual_result")
-        print(expected_result.head(), "expected_result")
+        # print(actual_result.head(10), "actual_result")
+        # print(expected_result.head(10), "expected_result")
 
-        print(actual_result.tail(), "actual_result")
-        print(expected_result.tail(), "expected_result")
+        # print(actual_result.tail(), "actual_result")
+        # print(expected_result.tail(), "expected_result")
 
-        print(actual_result.dtypes, "actual_result")
-        print(expected_result.dtypes, "expected_result")
+        # print(actual_result.dtypes, "actual_result")
+        # print(expected_result.dtypes, "expected_result")
 
+        # actual_result.to_csv("actual.csv", sep=" ")
         # Using allclose here, since it does not care about 32/64 differences
         assert np.allclose(expected_result, actual_result)
 

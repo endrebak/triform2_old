@@ -161,6 +161,7 @@ def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
     results = {}
     for chromosome, direction in product(chip_data.keys(), ["reverse",
                                                             "forward"]):
+        print(direction * 100)
         results[chromosome, direction] = _chromosome(
             chip_data[chromosome][direction],
             input_data[chromosome][direction],
@@ -209,6 +210,8 @@ def _chromosome(chip, input, chip_sizes, input_sizes, args):
                                              log_p=True),
                                   np.log(10)))
         start_peaks = r["start"](peaks)
+        print(peak_type)
+        print(start_peaks)
         end_peaks = r["end"](peaks)
         sum_starts_ends = r["+"](start_peaks, end_peaks)
         peak_locs = r["/"](sum_starts_ends, 2)

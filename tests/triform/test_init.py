@@ -33,7 +33,7 @@ def expected_result_input(init_result_input):
             for k, v in init_result_input.items()}
 
 
-@pytest.mark.unit
+@pytest.mark.current
 def test_init_treatment(expected_result_chip, input_data_treatment, args):
 
     asserts = []

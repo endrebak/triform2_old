@@ -38,18 +38,13 @@ def test_preprocess(args, expected_result_treatment, expected_result_control):
 
     t = treatment["chrY"]
     for k, l in t.items():
-        # print(k, "key")
-        # print(l)
         l_as_df = ri2py(rle_to_df(l)).astype(np.int64)
-        # print(l_as_df)
 
         assert expected_result_treatment[k].equals(l_as_df)
 
     c = control["chrY"]
     print(expected_result_control.keys(), 'expected_result_control.keys()')
     for k, l in c.items():
-        # print(k, "key")
-        # print(l)
         f, d = k
         print(f)
         print(d)

@@ -129,6 +129,7 @@ if __name__ == '__main__':
 
     treatment, control, treatment_sizes, control_sizes = preprocess(args)
 
+    raise
     print(treatment_sizes, control_sizes)
     for k, v in treatment.items():
         print(k)
