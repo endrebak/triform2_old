@@ -47,7 +47,7 @@ def indata_chip(indata_make_chromosome_cover_files_chip, args):
     return d
 
 
-@pytest.mark.unit
+@pytest.mark.current
 def test_make_chromosome_cover_files_chip(indata_chip,
                                           expected_result_treatment, args):
     cvgs, sizes = make_chromosome_cover_files(indata_chip, args)
@@ -56,12 +56,11 @@ def test_make_chromosome_cover_files_chip(indata_chip,
 
     print(expected_result_treatment.keys(), "expected_result_treatment")
     for (f, direction), v in expected_result_treatment.items():
-        print(v, "v" * 100)
-        print(cvgs[f]["chrY", direction], 'cvgs[f]["chrY",' + direction + ']')
-        assert 0
-        actual = ri2py(rle_to_df(v)).astype(int64)
+        print(v.head(), "v")
+        print(v.tail(), "v")
+        print('cvgs[f]["chrY",' + direction + ']')
+        actual = ri2py(rle_to_df(cvgs[f]["chrY", direction])).astype(int64)
         print("actual")
         print(actual)
         print("expected")
-        print(expected_result_treatment[k])
-        assert actual.equals(expected_result_treatment[k])
+        assert actual.equals(v)
