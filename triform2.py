@@ -12,7 +12,7 @@ from rpy2.robjects import r
 
 from triform.version import __version__
 from triform.preprocess.preprocess import preprocess
-from triform.init import init
+from triform.init import init_background, init_treatment
 from triform.chromosome import chromosome
 
 parser = argparse.ArgumentParser(
@@ -123,26 +123,69 @@ parser.add_argument('--version',
                     action='version',
                     version='%(prog)s {}'.format(__version__))
 
+
+def make_treatment_control_same_length(treatment, control):
+
+    treatment_result_dict = dict()
+    control_result_dict = dict()
+    for chromosome in treatment:
+
+        chr_treatment, chr_control = treatment[chromosome], control[chromosome]
+
+        treatment_maxlen = r["max"](r["sapply"](chr_treatment.values(),
+                                                "length"))
+        control_maxlen = r["max"](r["sapply"](chr_control.values(), "length"))
+
+        maxlen = max(treatment_maxlen, control_maxlen)
+
+        lapply = r('function(cvg, maxlen) c(cvg,Rle(0,maxlen-length(cvg)))')
+
+        treatment_result = {k: lapply(v, maxlen)
+                            for (k, v) in chr_treatment.items()}
+        control_result = {k: lapply(v, maxlen)
+                          for (k, v) in chr_control.items()}
+
+        treatment_result_dict[chromosome] = treatment_result
+        control_result_dict[chromosome] = control_result
+
+    return treatment_result_dict, control_result_dict
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     print("# triform2 " + " ".join(argv[1:]))
 
     treatment, control, treatment_sizes, control_sizes = preprocess(args)
+    # print(treatment)
+    # print(control)
 
-    raise
-    print(treatment_sizes, control_sizes)
-    for k, v in treatment.items():
+    # raise
+    # print(treatment_sizes, control_sizes)
+    # for k, v in treatment.items():
+    #     print(k)
+    #     print(v)
+    #     print(type(v))
+    init_treatment = init_treatment(treatment, args)
+    init_control = init_background(control, args)
+
+    init_treatment, init_control = make_treatment_control_same_length(
+        init_treatment, init_control)
+
+    print(init_treatment["chrY"].keys())
+    for k, v in init_treatment["chrY"].items():
         print(k)
         print(v)
-        print(type(v))
-    init_treatment = init(treatment, False, args)
-    init_control = init(control, True, args)
-    print(init_treatment.keys())
-    chromosome(init_treatment, init_control, treatment_sizes, control_sizes,
-               args)
 
-    print(init_treatment.keys(), "init_treatment.keys()")
-    print(init_control.keys(), "init_control.keys()")
+    results = chromosome(init_treatment, init_control, treatment_sizes,
+                         control_sizes, args)
+    print(results["chrY", "reverse"])
+    for k, v in results.items():
+        print(k)
+        for k2, v2 in v.items():
+            r["print"](v)
+
+    # print(init_treatment.keys(), "init_treatment.keys()")
+    # print(init_control.keys(), "init_control.keys()")
 
     # for k, v in init_treatment.items():
     #     print(k)

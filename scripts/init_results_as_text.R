@@ -1,9 +1,8 @@
-
 library(IRanges)
 
 "Converts the output from test.init to csv data."
 
-load("temp/cvg.RData")
+load("temp/cvg_no_maxlen.RData")
 
 files = names(CVG)
 

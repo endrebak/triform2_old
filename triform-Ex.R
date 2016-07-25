@@ -21,7 +21,7 @@ flush(stderr()); flush(stdout())
 # Run preprocessing using a configuration file in YAML format:
 ## print(getwd())
 source("R/preprocess.R")
-preprocess("inst/extdata/config.yml")
+## preprocess("inst/extdata/config.yml")
 
 # Run preprocessing without using a configuration file:
 ## preprocess(configPath = NULL, params=list(READ.PATH="./tmp",
@@ -45,8 +45,8 @@ flush(stderr()); flush(stdout())
 
 ## Not run:
 ##D preprocess("./config.yml")
-## source("R/triform.R")
-## triform("inst/extdata/config.yml", params=list(hoo="hoo"))
+source("R/triform.R")
+triform("inst/extdata/config.yml", params=list(hoo="hoo"))
 ## End(Not run)
 
 

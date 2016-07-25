@@ -9,10 +9,10 @@ from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 
 
-def init(covers, is_input, args):
+def init_treatment(covers, args):
 
     ranged_data = Parallel(n_jobs=args.number_cores)(
-        delayed(_init)(chromosome_covers, is_input, args)
+        delayed(_init_treatment)(chromosome_covers, args)
         for chromosome_covers in covers.values())
 
     data_per_chromosome = {}
@@ -22,7 +22,7 @@ def init(covers, is_input, args):
     return data_per_chromosome
 
 
-def _init(covers, is_input, args):
+def _init_treatment(covers, args):
 
     replicates = set(k[0] for k in covers.keys())
 
@@ -34,10 +34,6 @@ def _init(covers, is_input, args):
             replicates, ["reverse", "forward"], ["left", "right", "center"]):
 
         cvg = covers[replicate, direction]
-        if is_input:
-            if location == "center":
-                results[replicate, direction, location] = cvg
-            continue
 
         if location == "left":
             cvg = r('''function(cvg, flank.delta.pad, flank.delta) {
@@ -50,8 +46,34 @@ def _init(covers, is_input, args):
 
         results[replicate, direction, location] = cvg
 
-    maxlen = r["max"](r["sapply"](results.values(), "length"))
-    lapply = r('function(cvg, maxlen) c(cvg,Rle(0,maxlen-length(cvg)))')
-    results = {k: lapply(v, maxlen) for (k, v) in results.items()}
+    return results
+
+
+def init_background(covers, args):
+
+    ranged_data = Parallel(n_jobs=args.number_cores)(
+        delayed(_init_background)(chromosome_covers, args)
+        for chromosome_covers in covers.values())
+
+    data_per_chromosome = {}
+    for chromosome, covers in zip(covers.keys(), ranged_data):
+        data_per_chromosome[chromosome] = covers
+
+    return data_per_chromosome
+
+
+def _init_background(covers, args):
+
+    replicates = set(k[0] for k in covers.keys())
+
+    results = dict()
+
+    flank_delta_pad = r["Rle"](0, args.flank_distance)
+
+    for replicate, direction, location in product(
+            replicates, ["reverse", "forward"], ["center"]):
+
+        cvg = covers[replicate, direction]
+        results[replicate, direction, location] = cvg
 
     return results

@@ -13,7 +13,7 @@ from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 importr("S4Vectors")
 
-from triform.init import _init
+from triform.init import _init_background, _init_treatment
 from triform.helper_functions import df_to_rle, rle_to_df
 
 
@@ -33,19 +33,20 @@ def expected_result_input(init_result_input):
             for k, v in init_result_input.items()}
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_init_treatment(expected_result_chip, input_data_treatment, args):
 
     asserts = []
-    results_treatment = _init(input_data_treatment, False, args)
+    results_treatment = _init_treatment(input_data_treatment, args)
     for k, v in results_treatment.items():
         print(k)
         expected_result = expected_result_chip[k]
         actual_result = ri2py(rle_to_df(v)).astype(np.int64)
         print(expected_result.tail())
         print(actual_result.tail())
-        assert expected_result.equals(actual_result)
-        asserts.append(expected_result.equals(actual_result))
+        assertion = expected_result.equals(actual_result)
+        print(assertion)
+        asserts.append(assertion)
 
     print(asserts)
     assert all(asserts)
@@ -54,14 +55,12 @@ def test_init_treatment(expected_result_chip, input_data_treatment, args):
 @pytest.mark.unit
 def test_init_background(expected_result_input, input_data_control, args):
 
-    results_control = _init(input_data_control, True, args)
+    results_control = _init_background(input_data_control, args)
 
     asserts = []
     for k, v in results_control.items():
         expected_result = expected_result_input[k]
         actual_result = ri2py(rle_to_df(v)).astype(np.int64)
-        # actual_result.to_csv("backr_actual_result_{}.csv".format("_".join(k)),
-        # sep=" ")
         asserts.append(expected_result.equals(actual_result))
 
     print(asserts)

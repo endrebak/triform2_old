@@ -4,9 +4,9 @@ options(stringsAsFactors=FALSE)
 library(IRanges)
 library(yaml)
 
-load("temp/cvg.RData")
-load("temp/sizes.RData")
-load("temp/chr.RData")
+## load("temp/cvg.RData")
+## load("temp/sizes.RData")
+## load("temp/chr.RData")
 
 ##' Runs Triform according to configuration file or given parameters.
 ##'
@@ -49,7 +49,6 @@ triform <- function(configPath="./config.yml", params=list()){
   TARGET.NAMES <<- unique(sub("_rep.", "", TARGETS))
 
   # Below code just sets a bunch of names
-
   MIN.Z <<- qnorm(MAX.P, lower.tail=FALSE)
   FLANK.DELTA.PAD <<- Rle(0, FLANK.DELTA)
 
@@ -142,6 +141,27 @@ test.genome <- function(min.z=MIN.Z,
                                   filePath=chrcoversPath))
     message("Found ", as.character(N.PEAKS), " peaks")
   }
+
+	INFO <<- INFO[order(-INFO$NLP),]
+	nlps <- unique(INFO$NLP)
+	sizes <- sapply(nlps,function(nlp) sum(INFO$NLP == nlp))
+	indices <- sapply(nlps,function(nlp) sum(INFO$NLP >= nlp))
+
+	nlrs <- mapply(function(nlp, j) {
+		m <- sum(INFO$MAX.NLP >= nlp)	# Tarone modification for discrete nlp
+		b.y <- log10(sum((1:m)^-1))		# discrete Benjamini-Yekutieli offset
+		nls <- nlp + log10(j/m)				# discrete Benjamini-Hochberg adjustment
+		max(nls-b.y,0)								# discrete Benjamini-Yekutieli adjustment
+	}, nlp=nlps, j=indices)
+
+	M <- length(nlrs)
+	nlqs <- numeric(M)
+	for(i in 1:M) nlqs[i] <- max(nlrs[i:M])		# step-up procedure
+	nlqss <- unlist(mapply(function(nlq,size) rep(nlq,size),
+									nlq=nlqs, size=sizes))
+
+	INFO <<- cbind(QVAL=10^-nlqss, NLQ=nlqss, INFO)
+
   message("\n\nSaving results to path: ", outputFilePath)
   flush.console()
   write.table(INFO, file=outputFilePath, col.names=NA, quote=FALSE, sep="\t")
@@ -163,10 +183,11 @@ test.chr <- function(chr,
                      min.shift=MIN.SHIFT,
                      min.width=MIN.WIDTH,
                      filePath="./chrcovers") {
-  ## test.init(chr, filePath)
-  ## save(CVG, file="temp/cvg.RData")
-  ## save(SIZES, file="temp/sizes.RData")
-  ## save(CHR, file="temp/chr.RData")
+  test.init(chr, filePath)
+  ## print(CVG)
+  save(CVG, file="temp/cvg.RData")
+  save(SIZES, file="temp/sizes.RData")
+  save(CHR, file="temp/chr.RData")
 
   PEAKS <<- list()
   PEAK.INFO <<- list()
@@ -684,6 +705,7 @@ test.init <- function(chr, filePath="./chrcovers") {
 
   ## print(file.path(filePath, paste(chr,".RData",sep=""))) # "./chrcovers/chrY.RData"
   load(file.path(filePath, paste(chr,".RData",sep="")), .GlobalEnv) # load chrcovers
+  print(file.path(filePath, paste(chr,".RData",sep="")))
 
   CVG <<- list()
   SIZES <<- NULL
@@ -710,16 +732,16 @@ test.init <- function(chr, filePath="./chrcovers") {
     cvgs <- chrcovers[[type]]$CVG		# coverage on each strand
 
     for (i in 1:N.DIRLOCS) {   			# DIRECTON.LOCATION index
-      print("i")
-      print(i)
+      ## print("i")
+      ## print(i)
       n <- i+N.DIRLOCS*(h-1)   			# SAMPLE.DIRECTON.LOCATION index
-      print("n")
-      print(n)
+      ## print("n")
+      ## print(n)
       j <- ceiling(i/N.LOCS)    		# DIRECTION index
-      print("j")
-      print(j)
+      ## print("j")
+      ## print(j)
       cvg <- cvgs[[j]]        			# strand-specific coverage
-      print(cvg)
+      ## print(cvg)
 
       if(IS.CONTROL[n]) {
         if(IS.CENTER[n]) {
@@ -736,9 +758,10 @@ test.init <- function(chr, filePath="./chrcovers") {
              CVG[[n]] <<- cvg     # strand-specific coverage on center
              )
       x = 1 + (i-1)%%N.LOCS
-      print("x")
-      print(x)
+      ## print("x")
+      ## print(x)
       print("CVG[[x]]")
+      print(names(CVG[x]))
       print(CVG[[x]])
     }
   }
@@ -751,7 +774,28 @@ test.init <- function(chr, filePath="./chrcovers") {
   print("maxlen")
   print(maxlen)
   print(CVG)
+
+  save(CVG, file="temp/cvg_no_maxlen.RData")
   CVG <<- lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
+  print("CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG")
+  print("CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG")
+  print("CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG")
+  print("CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG")
+  print("CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG CVG")
+  print(CVG)
+
+  print("maxlen")
+  print(maxlen)
+## $srf_huds_Gm12878_rep1.REVERSE.CENTER
+## integer-Rle of length 57442690 with 12472 runs
+##   Lengths: 2709676     100   31062     100 ...     232     100      94     100
+##   Values :       0       1       0       1 ...       0       1       0       1
+
+## $srf_huds_Gm12878_rep1.REVERSE.CENTER
+## numeric-Rle of length 57442693 with 12473 runs
+##   Lengths: 2709676     100   31062     100 ...     100      94     100       3
+##   Values :       0       1       0       1 ...       1       0       1       0
+
   names(SIZES) <<- CVG.NAMES
 
   CHR <<- chr

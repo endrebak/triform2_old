@@ -167,6 +167,7 @@ def init_result_input():
     }
 
 
+# not extended to maxlen with lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
 @pytest.fixture(scope="session")
 def init_result_chip():
     return {

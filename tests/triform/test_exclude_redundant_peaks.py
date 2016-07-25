@@ -12,7 +12,6 @@ ri2py = pandas2ri.ri2py
 from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 importr("S4Vectors")
-from triform.init import _init
 from triform.chromosome import chromosome
 from triform.helper_functions import (
     subset_RS4, subset_RS4_rows, subset_RS4_cols, df_to_iranges, df_to_rle)
@@ -48,7 +47,7 @@ def input_data():
     return results
 
 
-@pytest.mark.unit
+@pytest.mark.current
 def test_exclude_redundant_peaks(input_data, expected_result):
 
     result = exclude_redundant_peaks(input_data)
