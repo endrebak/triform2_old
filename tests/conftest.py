@@ -196,3 +196,48 @@ def init_result_chip():
         ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "right"):
         "tests/test_data/srf_huds_Gm12878_rep2.REVERSE.RIGHT.csv"
     }
+
+
+@pytest.fixture(scope="session")
+def init_result_input_plus3():
+    return {
+        ("examples/backgr_huds_Gm12878_rep1.bed", "forward", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep1.FORWARD.CENTER.add3.csv",
+        ("examples/backgr_huds_Gm12878_rep2.bed", "forward", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep2.FORWARD.CENTER.add3.csv",
+        ("examples/backgr_huds_Gm12878_rep1.bed", "reverse", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep1.REVERSE.CENTER.add3.csv",
+        ("examples/backgr_huds_Gm12878_rep2.bed", "reverse", "center"):
+        "tests/test_data/backgr_huds_Gm12878_rep2.REVERSE.CENTER.add3.csv",
+    }
+
+
+# not extended to maxlen with lapply(CVG,function(cvg) c(cvg,Rle(0,maxlen-length(cvg))))
+@pytest.fixture(scope="session")
+def init_result_chip_plus3():
+    return {
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep1.FORWARD.CENTER.add3.csv",
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep1.FORWARD.LEFT.add3.csv",
+        ("examples/srf_huds_Gm12878_rep1.bed", "forward", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep1.FORWARD.RIGHT.add3.csv",
+        ("examples/srf_huds_Gm12878_rep2.bed", "forward", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep2.FORWARD.CENTER.add3.csv",
+        ("examples/srf_huds_Gm12878_rep2.bed", "forward", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep2.FORWARD.LEFT.add3.csv",
+        ("examples/srf_huds_Gm12878_rep2.bed", "forward", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep2.FORWARD.RIGHT.add3.csv",
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep1.REVERSE.CENTER.add3.csv",
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep1.REVERSE.LEFT.add3.csv",
+        ("examples/srf_huds_Gm12878_rep1.bed", "reverse", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep1.REVERSE.RIGHT.add3.csv",
+        ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "center"):
+        "tests/test_data/srf_huds_Gm12878_rep2.REVERSE.CENTER.add3.csv",
+        ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "left"):
+        "tests/test_data/srf_huds_Gm12878_rep2.REVERSE.LEFT.add3.csv",
+        ("examples/srf_huds_Gm12878_rep2.bed", "reverse", "right"):
+        "tests/test_data/srf_huds_Gm12878_rep2.REVERSE.RIGHT.add3.csv"
+    }

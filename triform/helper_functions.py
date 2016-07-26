@@ -1,4 +1,7 @@
-from rpy2.robjects import r
+from numpy import int64
+
+from rpy2.robjects import r, pandas2ri
+ri2py = pandas2ri.ri2py
 
 
 def subset_RS4(rs4, subset, drop=False):
@@ -53,6 +56,11 @@ def rle_to_df(rle):
     """)
 
     return _rle_to_df(rle)
+
+
+def rle_to_pandas_df(rle):
+
+    return ri2py(rle_to_df(rle)).astype(int64)
 
 
 def df_to_iranges(df):

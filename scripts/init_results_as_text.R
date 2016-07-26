@@ -2,7 +2,7 @@ library(IRanges)
 
 "Converts the output from test.init to csv data."
 
-load("temp/cvg_no_maxlen.RData")
+load("temp/cvg.RData")
 
 files = names(CVG)
 
@@ -18,7 +18,7 @@ for (f in files){
   rl = runValue(rle)
   df = data.frame(lengths=rv, values=rl)
 
-  outfile = paste0(outfolder, f, ".csv")
+  outfile = paste0(outfolder, f, ".add3", ".csv")
   print(outfile)
   write.table(df, outfile, sep=" ")
 }
