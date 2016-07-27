@@ -12,8 +12,12 @@ from rpy2.robjects import r
 
 from triform.version import __version__
 from triform.preprocess.preprocess import preprocess
+from triform.compute_fdr import compute_fdr
 from triform.init import init_background, init_treatment
+from triform.make_treatment_control_same_length import (
+    make_treatment_control_same_length)
 from triform.chromosome import chromosome
+from triform.find_peaks import find_peaks
 from triform.exclude_redundant_peaks import exclude_redundant_peaks
 
 parser = argparse.ArgumentParser(
@@ -129,49 +133,18 @@ if __name__ == '__main__':
     print("# triform2 " + " ".join(argv[1:]))
 
     treatment, control, treatment_sizes, control_sizes = preprocess(args)
-    # print(treatment)
-    # print(control)
-
-    # raise
-    # print(treatment_sizes, control_sizes)
-    # for k, v in treatment.items():
-    #     print(k)
-    #     print(v)
-    #     print(type(v))
     init_treatment = init_treatment(treatment, args)
     init_control = init_background(control, args)
 
     init_treatment, init_control = make_treatment_control_same_length(
         init_treatment, init_control)
 
-    # print(init_treatment["chrY"].keys())
-    # for k, v in init_treatment["chrY"].items():
-    #     print(k)
-    #     print(v)
-
     results = chromosome(init_treatment, init_control, treatment_sizes,
                          control_sizes, args)
 
-    peak_info = exclude_redundant_peaks(results)
-    print(peak_info)
-    # print(results["chrY", "reverse"])
-    # for k, v in results.items():
-    #     print("k")
-    #     print(k)
-    #     print("v")
-    #     print(v)
-    #     for k2, v2 in v.items():
-    #         print("k2")
-    #         print(k2)
-    #         print("v2")
-    #         print(v2)
+    peaks = find_peaks(results, args)
 
-    # print(init_treatment.keys(), "init_treatment.keys()")
-    # print(init_control.keys(), "init_control.keys()")
+    peak_info = exclude_redundant_peaks(peaks, args)
 
-    # for k, v in init_treatment.items():
-    #     print(k)
-    #     print(v)
-    # print(init_treatment)
-
-    # rpy2.robjects.r["save"](treatment[0], file="chrcovers.RData")
+    fdr_table = compute_fdr(peak_info)
+    print(fdr_table)

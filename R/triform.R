@@ -142,6 +142,9 @@ test.genome <- function(min.z=MIN.Z,
     message("Found ", as.character(N.PEAKS), " peaks")
   }
 
+  print("INFO")
+  print(INFO)
+
 	INFO <<- INFO[order(-INFO$NLP),]
 	nlps <- unique(INFO$NLP)
 	sizes <- sapply(nlps,function(nlp) sum(INFO$NLP == nlp))

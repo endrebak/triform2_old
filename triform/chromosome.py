@@ -170,20 +170,15 @@ def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
     return results
 
 
-def _chromosome(chip, input, chip_sizes, input_sizes, args):
-
-    "key of type: ('examples/srf_huds_Gm12878_rep1.bed', 'reverse', 'left')"
-
-    "this expects dict where keys file values dict of directions"
-    "collect the data and create desired dict?"
+def _chromosome(chip, input_data, chip_sizes, input_data_sizes, args):
 
     results = defaultdict(dict)
-    input = collect_key(input, "center").values()
-    input = r["Reduce"]("+", input)
+    input_data = collect_key(input_data, "center").values()
+    input_data = r["Reduce"]("+", input_data)
 
-    ratios = compute_ratios(chip_sizes, sum(input_sizes.values()))
+    ratios = compute_ratios(chip_sizes, sum(input_data_sizes.values()))
 
-    ratio = sum(input_sizes.values()) / sum(chip_sizes.values())
+    ratio = sum(input_data_sizes.values()) / sum(chip_sizes.values())
 
     center = collect_key(chip, "center")
     left = collect_key(chip, "left")
@@ -195,7 +190,7 @@ def _chromosome(chip, input, chip_sizes, input_sizes, args):
 
     results["cvg"] = cvg
     _peaks, _zscores = compute_peaks_and_zscores(
-        cvg, center, left, right, chip, input, ratios, ratio, args)
+        cvg, center, left, right, chip, input_data, ratios, ratio, args)
 
     views_func = r("function(x,y) Views(x,y)")
 
@@ -216,7 +211,7 @@ def _chromosome(chip, input, chip_sizes, input_sizes, args):
         peak_locs = r["round"](peak_locs)
 
         peak_cvg = subset_RS4(cvg, peak_locs, True)
-        peak_ref = subset_RS4(input, peak_locs, True)
+        peak_ref = subset_RS4(input_data, peak_locs, True)
 
         peak_enrich_cvg = r["+"](1, r["*"](ratio, peak_cvg))
         peak_enrich_ref = r["+"](1, peak_ref)

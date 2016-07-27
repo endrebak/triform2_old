@@ -45,7 +45,7 @@ def expected_result(init_result_chip_plus3, init_result_input_plus3):
     return chip_data, input_data
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_make_treatment_control_same_length(input_data, expected_result):
 
     treatment, control = input_data

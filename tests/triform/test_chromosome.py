@@ -11,7 +11,6 @@ ri2py = pandas2ri.ri2py
 from rpy2.robjects.packages import importr
 importr("GenomicRanges")
 importr("S4Vectors")
-from triform.init import _init
 from triform.chromosome import chromosome
 from triform.helper_functions import df_to_rle, rle_to_df
 
@@ -78,9 +77,9 @@ def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
 
     results = chromosome(chip_data, input_data, chip_sizes, input_sizes, args)
 
-    results["chrY", "forward"]["peak_info"][1]
-    results["chrY", "forward"]["peak_info"][2]
-    results["chrY", "forward"]["peak_info"][3]
+    # results["chrY", "forward"]["peak_info"][1]
+    # results["chrY", "forward"]["peak_info"][2]
+    # results["chrY", "forward"]["peak_info"][3]
 
     asserts = []
     for (_chromosome, direction,

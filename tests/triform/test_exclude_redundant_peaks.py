@@ -1,3 +1,4 @@
+from collections import defaultdict
 import pandas as pd
 import numpy as np
 
@@ -6,7 +7,7 @@ from io import StringIO
 
 from rpy2.robjects import r, pandas2ri
 ri2py = pandas2ri.ri2py
-from triform.exclude_redundant_peaks import exclude_redundant_peaks
+from triform.exclude_redundant_peaks import _exclude_redundant_peaks
 from triform.helper_functions import (df_to_iranges)
 
 
@@ -25,26 +26,26 @@ chrY:10631247-10631396:3 4.039029 4.039029 10631334   150 10631247 10631396 14 2
 @pytest.fixture
 def input_data():
 
-    results = {}
+    results = defaultdict(dict)
     for peak_type in range(1, 4):
 
         info = r["read.table"]("tests/test_data/find_peaks_result_%s.csv" %
                                peak_type,
                                sep=" ")
-        results["peak_info", peak_type] = info
+        results["peak_info"][peak_type] = info
 
         peaks = r["read.table"]("tests/test_data/merge_peaks_%s.csv" %
                                 peak_type,
                                 sep=" ")
-        results["peaks", peak_type] = df_to_iranges(peaks)
+        results["peaks"][peak_type] = df_to_iranges(peaks)
 
     return results
 
 
-@pytest.mark.unit
+@pytest.mark.current
 def test_exclude_redundant_peaks(input_data, expected_result):
 
-    result = exclude_redundant_peaks(input_data)
+    result = _exclude_redundant_peaks(input_data)
 
     print("result")
     print(result)
