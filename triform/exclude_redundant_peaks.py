@@ -21,12 +21,12 @@ def _exclude_redundant_peaks(indata):
     p1 = indata["peaks"][1]
     p2 = indata["peaks"][2]
     p3 = indata["peaks"][3]
-    print("p1")
-    print(p1)
-    print("p2")
-    print(p2)
-    print("p3")
-    print(p3)
+    # print("p1")
+    # print(p1)
+    # print("p2")
+    # print(p2)
+    # print("p3")
+    # print(p3)
 
     # # IRanges of length 1
     # #     start      end width
@@ -43,12 +43,12 @@ def _exclude_redundant_peaks(indata):
     # # [1] 10631247 10631396   150
     # # [2] 57420858 57420942    85
 
-    print("indata['peak_info'][1]")
-    print(indata['peak_info'][1])
-    print("indata['peak_info'][2]")
-    print(indata['peak_info'][2])
-    print("indata['peak_info'][3]")
-    print(indata['peak_info'][3])
+    # print("indata['peak_info'][1]")
+    # print(indata['peak_info'][1])
+    # print("indata['peak_info'][2]")
+    # print(indata['peak_info'][2])
+    # print("indata['peak_info'][3]")
+    # print(indata['peak_info'][3])
 
     # indata['peak_info'][1]
     #                               NLP  MAX.NLP      LOC WIDTH    START      END CVG

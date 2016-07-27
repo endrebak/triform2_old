@@ -15,7 +15,7 @@ def make_chromosome_cover_files(ranged_data_per_file, args):
     cvgs = defaultdict(dict)
     sizes = defaultdict(dict)
     # print(ranged_data_per_file, "ranged_data_per_file")
-    print(ranged_data_per_file.keys(), "ranged_data_per_file.keys()")
+    # print(ranged_data_per_file.keys(), "ranged_data_per_file.keys()")
     for f, chromosome_granges in ranged_data_per_file.items():
         # print(f, "f")
         # print(chromosome_granges, "chromosome_granges")
@@ -27,9 +27,9 @@ def make_chromosome_cover_files(ranged_data_per_file, args):
         assert len(ranged_data) == len(chromosome_granges)
 
         for c, (cvg, size) in zip(chromosome_granges.keys(), ranged_data):
-            print(c, "c")
-            print(cvg, "cvg")
-            print(size, "size")
+            # print(c, "c")
+            # print(cvg, "cvg")
+            # print(size, "size")
 
             cvgs[c][f, "forward"] = cvg["+"]
             cvgs[c][f, "reverse"] = cvg["-"]

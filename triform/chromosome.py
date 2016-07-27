@@ -1,8 +1,13 @@
 from __future__ import division
+
+import logging
+
 import numpy as np
 
 from itertools import product
 from collections import defaultdict
+
+from joblib import Parallel, delayed
 
 from rpy2.robjects import r, pandas2ri
 ri2py = pandas2ri.ri2py
@@ -11,6 +16,7 @@ importr("GenomicRanges")
 importr("S4Vectors")
 
 from triform.helper_functions import subset_RS4
+import triform.config.logging_settings
 
 
 def collect_key(d, key):
@@ -158,14 +164,17 @@ def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
     chip_sizes = transform_input_sizes(chip_sizes)
     input_sizes = transform_input_sizes(input_sizes)
 
-    results = {}
-    for chromosome, direction in product(chip_data.keys(), ["reverse",
-                                                            "forward"]):
-        results[chromosome, direction] = _chromosome(
-            chip_data[chromosome][direction],
-            input_data[chromosome][direction],
-            chip_sizes[chromosome][direction],
-            input_sizes[chromosome][direction], args)
+    assert len(chip_data) == len(input_data) == len(chip_sizes) == len(
+        input_sizes), "chip_data, input_data, chip_sizes, and input_sizes do not all have the same length!"
+
+    keys = product(chip_data, ["forward", "reverse"])
+
+    results = Parallel(n_jobs=args.number_cores)(delayed(_chromosome)(
+        chip_data[chromosome][direction], input_data[chromosome][direction],
+        chip_sizes[chromosome][direction], input_sizes[chromosome][direction],
+        args) for chromosome, direction in keys)
+
+    results = {k: v for (k, v) in zip(keys, results)}
 
     return results
 

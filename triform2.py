@@ -1,5 +1,6 @@
 import pkg_resources
 
+import logging
 from collections import defaultdict, OrderedDict
 import os
 import argparse
@@ -9,6 +10,8 @@ from joblib import Parallel, delayed
 import rpy2
 from rpy2.robjects.packages import importr
 from rpy2.robjects import r
+
+import triform.config.logging_settings
 
 from triform.version import __version__
 from triform.preprocess.preprocess import preprocess
@@ -130,21 +133,33 @@ parser.add_argument('--version',
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    print("# triform2 " + " ".join(argv[1:]))
 
+    print("# triform2 " + " ".join(argv[1:]))
+    logging.info("# triform2 " + " ".join(argv[1:]))
+
+    logging.info("Preprocessing data.")
     treatment, control, treatment_sizes, control_sizes = preprocess(args)
+
+    logging.info("Initializing treatment data.")
     init_treatment = init_treatment(treatment, args)
+
+    logging.info("Initializing background data.")
     init_control = init_background(control, args)
 
     init_treatment, init_control = make_treatment_control_same_length(
         init_treatment, init_control)
 
+    logging.info("Computing statistics.")
     results = chromosome(init_treatment, init_control, treatment_sizes,
                          control_sizes, args)
 
+    logging.info("Finding enriched peaks.")
     peaks = find_peaks(results, args)
 
+    logging.info("Excluding redundant peaks.")
     peak_info = exclude_redundant_peaks(peaks, args)
 
+    logging.info("Computing FDR.")
     fdr_table = compute_fdr(peak_info)
+
     print(fdr_table)

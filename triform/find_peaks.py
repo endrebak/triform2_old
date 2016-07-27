@@ -16,24 +16,13 @@ def find_peaks(indata, args):
         indata[chromosome, "forward"], indata[chromosome, "reverse"],
         chromosome, args) for chromosome in chromosomes)
 
-    print("chromosomes")
-    print(chromosomes)
-    print("results")
-    # print(results)
-
     d = defaultdict(lambda: defaultdict(dict))
     for chromosome, (peaks, peak_info) in zip(chromosomes, results):
 
-        print("peaks")
-        print(peaks.keys())
         for k, v in peaks.items():
-            print(k)
             d[chromosome]["peaks"][k] = v
 
-        print("peak_info")
-        print(peak_info.keys())
         for k, v in peak_info.items():
-            print(k)
             d[chromosome]["peak_info"][k] = v
 
     return d
