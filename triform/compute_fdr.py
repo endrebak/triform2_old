@@ -7,6 +7,7 @@ def compute_fdr(dfs):
     """
 
     df = r["do.call"]("rbind", dfs)
+    r["write.table"](df, "PolII_fdr.csv", sep=" ")
 
     _compute_fdr = r("""function(INFO) {
     INFO <- INFO[order(-INFO$NLP),]

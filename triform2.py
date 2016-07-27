@@ -152,9 +152,11 @@ if __name__ == '__main__':
     logging.info("Computing statistics.")
     results = chromosome(init_treatment, init_control, treatment_sizes,
                          control_sizes, args)
+    print(results)
 
     logging.info("Finding enriched peaks.")
     peaks = find_peaks(results, args)
+    print(peaks)
 
     logging.info("Excluding redundant peaks.")
     peak_info = exclude_redundant_peaks(peaks, args)

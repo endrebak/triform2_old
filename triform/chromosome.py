@@ -167,16 +167,16 @@ def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
     assert len(chip_data) == len(input_data) == len(chip_sizes) == len(
         input_sizes), "chip_data, input_data, chip_sizes, and input_sizes do not all have the same length!"
 
-    keys = product(chip_data, ["forward", "reverse"])
+    keys = list(product(chip_data, ["forward", "reverse"]))
 
     results = Parallel(n_jobs=args.number_cores)(delayed(_chromosome)(
         chip_data[chromosome][direction], input_data[chromosome][direction],
         chip_sizes[chromosome][direction], input_sizes[chromosome][direction],
         args) for chromosome, direction in keys)
 
-    results = {k: v for (k, v) in zip(keys, results)}
+    results_dict = {k: v for k, v in zip(keys, results)}
 
-    return results
+    return results_dict
 
 
 def _chromosome(chip, input_data, chip_sizes, input_data_sizes, args):

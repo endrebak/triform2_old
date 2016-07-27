@@ -71,7 +71,7 @@ def chip_data(run_length_encodings_full):
                      for (k, v) in run_length_encodings_full.items()}}
 
 
-@pytest.mark.unit
+@pytest.mark.current
 def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
                     expected_result):
 
