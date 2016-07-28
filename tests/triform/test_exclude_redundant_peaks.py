@@ -34,21 +34,22 @@ def input_data():
                                sep=" ")
         results["peak_info"][peak_type] = info
 
-        peaks = r["read.table"]("tests/test_data/merge_peaks_%s.csv" %
-                                peak_type,
-                                sep=" ")
-        results["peaks"][peak_type] = df_to_iranges(peaks)
+        # peaks = r["read.table"]("tests/test_data/merge_peaks_%s.csv" %
+        #                         peak_type,
+        #                         sep=" ")
+        # results["peaks"][peak_type] = df_to_iranges(peaks)
 
     return results
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_exclude_redundant_peaks(input_data, expected_result):
 
     result = _exclude_redundant_peaks(input_data)
 
     print("result")
     print(result)
+    # print(result.dtypes)
     print("expected_result")
     print(expected_result)
     assert np.allclose(expected_result, ri2py(result))

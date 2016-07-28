@@ -1,12 +1,11 @@
-from joblib import Parallel, delayed
-from rpy2.robjects import r, pandas2ri
-ri2py = pandas2ri.ri2py
-from rpy2.robjects.packages import importr
-importr("GenomicRanges")
-importr("S4Vectors")
+import pandas as pd
 
-from triform.helper_functions import (
-    subset_RS4, subset_RS4_rows, subset_RS4_cols, df_to_iranges, df_to_rle)
+from joblib import Parallel, delayed
+from rpy2.robjects import r, pandas2ri, globalenv
+pandas2ri.activate()
+ri2py = pandas2ri.ri2py
+
+from bx.intervals.intersection import IntervalTree
 
 
 def exclude_redundant_peaks(indata, args):
@@ -18,90 +17,103 @@ def exclude_redundant_peaks(indata, args):
 
 def _exclude_redundant_peaks(indata):
 
-    p1 = indata["peaks"][1]
-    p2 = indata["peaks"][2]
-    p3 = indata["peaks"][3]
-    # print("p1")
-    # print(p1)
-    # print("p2")
-    # print(p2)
-    # print("p3")
-    # print(p3)
+    it = IntervalTree()
+    # print("init")
 
-    # # IRanges of length 1
-    # #     start      end width
-    # # [1] 57420858 57420942    85
+    dfs = []
+    for peak_type, v in indata["peak_info"].items():
+        # print(peak_type)
+        df = ri2py(v)
 
-    # # p2
-    # # IRanges of length 1
-    # #     start      end width
-    # # [1] 10636518 10636576    59
+        locs = df.index.get_level_values(0).to_series()
+        locs = locs.str.split(":", expand=True).iloc[:, 1]
+        locs = locs.str.split("-", expand=True).astype(int)
 
-    # # p3
-    # # IRanges of length 2
-    # #     start      end width
-    # # [1] 10631247 10631396   150
-    # # [2] 57420858 57420942    85
+        keys = []
+        for k, (start, end) in locs.iterrows():
 
-    # print("indata['peak_info'][1]")
-    # print(indata['peak_info'][1])
-    # print("indata['peak_info'][2]")
-    # print(indata['peak_info'][2])
-    # print("indata['peak_info'][3]")
-    # print(indata['peak_info'][3])
+            intervals = it.find(start, end)
+            if intervals:
+                continue
 
-    # indata['peak_info'][1]
-    #                               NLP  MAX.NLP      LOC WIDTH    START      END CVG
-    # chrY:57420858-57420942:1 3.923426 6.317243 57420916    85 57420858 57420942  10
-    #                          SURL SURR FORM
-    # chrY:57420858-57420942:1    0    2    1
+            it.add(start, end, k)
+            keys.append(k)
 
-    # indata['peak_info'][2]
-    #                               NLP  MAX.NLP      LOC WIDTH    START      END CVG
-    # chrY:10636518-10636576:2 2.869699 2.869699 10636545    59 10636518 10636576   9
-    #                          SURL SURR FORM
-    # chrY:10636518-10636576:2    0   16    2
+        indexes = pd.DataFrame(index=pd.Series(keys))
+        found_rows = df.ix[indexes.index]
+        dfs.append(found_rows)
 
-    # indata['peak_info'][3]
-    #                               NLP  MAX.NLP      LOC WIDTH    START      END CVG
-    # chrY:10631247-10631396:3 4.039029 4.039029 10631334   150 10631247 10631396  14
-    # chrY:57420858-57420942:3 1.980441 3.575114 57420916    85 57420858 57420942  10
-    #                          SURL SURR FORM
-    # chrY:10631247-10631396:3   24    0    3
-    # chrY:57420858-57420942:3    0    2    3
+    df = pd.concat(dfs, axis=0)
 
-    ov12 = r("function(p1, p2) matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)")(
-        p1, p2)
-    if r["nrow"](ov12):
-        ex2 = r("function(p2, ov12) 1:length(p2) %in% ov12[,2]")(p2, ov12)
-        inv_ex2 = r["!"](ex2)
-        p2 = subset_RS4_rows(p2, inv_ex2)
-        info2 = subset_RS4_rows(indata["peak_info"][2], inv_ex2)
+    df = pandas2ri.DataFrame(df)
+    # cols = "LOC WIDTH START END CVG SURL SURR FORM".split()
 
-    ov13 = r("function(p1, p3) matrix(as.matrix(findOverlaps(p1,p3)),ncol=2)")(
-        p1, p3)
-    if r["nrow"](ov13):
-        ex3 = r("function(p3, ov13) 1:length(p3) %in% ov13[,2]")(p3, ov13)
-        inv_ex3 = r["!"](ex3)
-        p3 = subset_RS4_rows(p3, inv_ex3)
-        info3 = subset_RS4_rows(indata["peak_info"][3], inv_ex3)
+    globalenv["df"] = df
+    df = r["df"]
 
-    # TODO: do not use harcoded variable
-    ov23 = r(
-        "function(p2, p3) matrix(as.matrix(findOverlaps(p2,p3, maxgap=100)),ncol=2)")(
-            p1, p3)
-    if r["nrow"](ov23):
-        ex2 = r("function(p2, ov23) 1:length(p2) %in% ov23[,1]")(p2, ov23)
-        inv_ex2 = r["!"](ex2)
-        p2 = subset_RS4_rows(p2, inv_ex2)
-        info2 = subset_RS4_rows(indata["peak_info"][2], inv_ex2)
+    # print(type(df))
+    # print(df)
 
-        ex2 = r("function(p3, ov23) 1:length(p3) %in% ov23[,2]")(p3, ov23)
-        inv_ex3 = r["!"](ex3)
-        p3 = subset_RS4_rows(p3, inv_ex3)
-        info3 = subset_RS4_rows(indata["peak_info"][3], inv_ex3)
+    # df[cols] = df[cols].astype(int)
 
-    peak_info = r["rbind"](indata["peak_info"][1], info2, info3)
-    nubmer_peaks = r["nrow"](peak_info)[0]
+    return df
 
-    return peak_info
+    # # peak_types = indata["peaks"].keys()
+    # # nb_peak_types = len(peak_types)
+
+    # # if nb_peak_types == 1:
+    # #     return indata["peak_info"][peak_types[0]]
+    # # if nb_peak_types == 2:
+    # #     pass
+
+    # p1 = indata["peaks"][1]
+    # p2 = indata["peaks"][2]
+    # p3 = indata["peaks"][3]
+
+    # ov12 = r("function(p1, p2) matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)")(
+    #     p1, p2)
+
+    # if r["nrow"](ov12):
+    #     ex2 = r("function(p2, ov12) 1:length(p2) %in% ov12[,2]")(p2, ov12)
+    #     inv_ex2 = r["!"](ex2)
+    #     print("oo")
+    #     print(r["length"](p2))
+    #     print(r["length"](inv_ex2))
+    #     p2 = subset_RS4_rows(p2, inv_ex2)
+    #     info2 = subset_RS4_rows(indata["peak_info"][2], inv_ex2)
+
+    # ov13 = r("function(p1, p3) matrix(as.matrix(findOverlaps(p1,p3)),ncol=2)")(
+    #     p1, p3)
+    # if r["nrow"](ov13):
+    #     ex3 = r("function(p3, ov13) 1:length(p3) %in% ov13[,2]")(p3, ov13)
+    #     inv_ex3 = r["!"](ex3)
+
+    #     print(r["length"](p3))
+    #     print(r["length"](inv_ex3))
+    #     p3 = subset_RS4_rows(p3, inv_ex3)
+    #     info3 = subset_RS4_rows(indata["peak_info"][3], inv_ex3)
+
+    # # TODO: do not use harcoded variable
+    # ov23 = r(
+    #     "function(p2, p3) matrix(as.matrix(findOverlaps(p2,p3, maxgap=100)),ncol=2)")(
+    #         p2, p3)
+    # print("ov23")
+    # print(ov23)
+
+    # if r["nrow"](ov23):
+    #     ex2 = r("function(p2, ov23) 1:length(p2) %in% ov23[,1]")(p2, ov23)
+    #     inv_ex2 = r["!"](ex2)
+    #     p2 = subset_RS4_rows(p2, inv_ex2)
+    #     info2 = subset_RS4_rows(indata["peak_info"][2], inv_ex2)
+
+    #     ex3 = r("function(p3, ov23) 1:length(p3) %in% ov23[,2]")(p3, ov23)
+    #     inv_ex3 = r["!"](ex3)
+    #     print(r["length"](p3))
+    #     print(r["length"](inv_ex3))
+    #     p3 = subset_RS4_rows(p3, inv_ex3)
+    #     info3 = subset_RS4_rows(indata["peak_info"][3], inv_ex3)
+
+    # peak_info = r["rbind"](indata["peak_info"][1], info2, info3)
+    # # nubmer_peaks = r["nrow"](peak_info)[0]
+
+    # return peak_info

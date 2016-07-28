@@ -14,14 +14,7 @@ from rpy2.robjects import r
 import triform.config.logging_settings
 
 from triform.version import __version__
-from triform.preprocess.preprocess import preprocess
-from triform.compute_fdr import compute_fdr
-from triform.init import init_background, init_treatment
-from triform.make_treatment_control_same_length import (
-    make_treatment_control_same_length)
-from triform.chromosome import chromosome
-from triform.find_peaks import find_peaks
-from triform.exclude_redundant_peaks import exclude_redundant_peaks
+from triform.run_triform import run_triform
 
 parser = argparse.ArgumentParser(
     description=
@@ -119,13 +112,6 @@ parser.add_argument(
     help=
     '''Minimum local enrichment ratio (default 3/8 quantile of the enrichment ratio)''')
 
-parser.add_argument('--tmpdir',
-                    '-td',
-                    required=False,
-                    default="/tmp/{process_id}/",
-                    type=str,
-                    help='''Directory to store intermediate results in.''')
-
 parser.add_argument('--version',
                     '-v',
                     action='version',
@@ -137,31 +123,33 @@ if __name__ == '__main__':
     print("# triform2 " + " ".join(argv[1:]))
     logging.info("# triform2 " + " ".join(argv[1:]))
 
-    logging.info("Preprocessing data.")
-    treatment, control, treatment_sizes, control_sizes = preprocess(args)
+    run_triform(args)
 
-    logging.info("Initializing treatment data.")
-    init_treatment = init_treatment(treatment, args)
+    # logging.info("Preprocessing data.")
+    # treatment, control, treatment_sizes, control_sizes = preprocess(args)
 
-    logging.info("Initializing background data.")
-    init_control = init_background(control, args)
+    # logging.info("Initializing treatment data.")
+    # init_treatment = init_treatment(treatment, args)
 
-    init_treatment, init_control = make_treatment_control_same_length(
-        init_treatment, init_control)
+    # logging.info("Initializing background data.")
+    # init_control = init_background(control, args)
 
-    logging.info("Computing statistics.")
-    results = chromosome(init_treatment, init_control, treatment_sizes,
-                         control_sizes, args)
-    print(results)
+    # init_treatment, init_control = make_treatment_control_same_length(
+    #     init_treatment, init_control)
 
-    logging.info("Finding enriched peaks.")
-    peaks = find_peaks(results, args)
-    print(peaks)
+    # logging.info("Computing statistics.")
+    # results = chromosome(init_treatment, init_control, treatment_sizes,
+    #                      control_sizes, args)
+    # print(results)
 
-    logging.info("Excluding redundant peaks.")
-    peak_info = exclude_redundant_peaks(peaks, args)
+    # logging.info("Finding enriched peaks.")
+    # peaks = find_peaks(results, args)
+    # print(peaks)
 
-    logging.info("Computing FDR.")
-    fdr_table = compute_fdr(peak_info)
+    # logging.info("Excluding redundant peaks.")
+    # peak_info = exclude_redundant_peaks(peaks, args)
 
-    print(fdr_table)
+    # logging.info("Computing FDR.")
+    # fdr_table = compute_fdr(peak_info)
+
+    # print(fdr_table)

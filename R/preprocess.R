@@ -16,7 +16,7 @@ library(yaml)
 ##' @param coverPath Path for coverage files (preprocessing output).
 ##' @param readWidth Read width (w)
 ##' @return
-preprocess <- function(configPath="./config.yml", params=list()){
+preprocess <- function(configPath="./config2.yml", params=list()){
   if (! is.null(configPath)){
     message("Using config file ", configPath)
     config <- yaml.load_file(configPath)

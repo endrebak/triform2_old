@@ -1,0 +1,48 @@
+READ.PATH : tests/test_data/  ## Path to source files (reads in BED format)
+COVER.PATH : ./chrcovers2  ## Path for chromosome coverage files
+OUTPUT.PATH : ./Triform_output2.csv ## Path for output file (including filename)
+
+TARGETS :
+## Filenames for TF experiments
+## Must include replicate name (_rep1 or _rep2), and .bed file ending
+ - PolII_rep1.bed
+ - PolII_rep2.bed
+
+CONTROLS :
+## Filenames for control/background experiments
+- Input_rep1.bed
+- Input_rep2.bed
+
+READ.WIDTH : 100  ## Read width (used when preprocessing data) (w)
+FLANK.DELTA : 150 ## Fixed spacing between central and flanking locations (δ)
+MAX.P : 0.1       ## Minimum p-value, used to calculate min.z
+
+MIN.WIDTH : 10  ## Minimum peak width (min.n)
+MIN.QUANT : 0.375 ## Quantile of enrichment ratios, used to calculate min.er (0.375 = 3/8)
+MIN.SHIFT : 10  ## Minimum inter-strand lag between peak coverage distributions
+
+CHRS : ## Chromosomes to be used in Triform peak detection
+ # - chr1
+ # - chr2
+ # - chr3
+ # - chr4
+ # - chr5
+ # - chr6
+ # - chr7
+ # - chr8
+ # - chr9
+ # - chr10
+ # - chr11
+ # - chr12
+ # - chr13
+ # - chr14
+ # - chr15
+ # - chr16
+ # - chr17
+ # - chr18
+ # - chr19
+ # - chr20
+ # - chr21
+ - chr22
+ # - chrX
+ # - chrY

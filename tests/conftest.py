@@ -15,6 +15,13 @@ MockNamespace = namedtuple("MockNamespace",
 
 
 @pytest.fixture(scope="session")
+def args_end_to_end_one_file():
+    return MockNamespace(1, "hg19", 100, 150, 0.375, 0.1, 10, 10,
+                         ["tests/test_data/PolII.bed"],
+                         ["tests/test_data/Input.bed"])
+
+
+@pytest.fixture(scope="session")
 def args():
     return MockNamespace(1, "hg19", 100, 150, 0.375, 0.1, 10, 10,
                          ["examples/srf_huds_Gm12878_rep1.bed",

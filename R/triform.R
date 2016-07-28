@@ -188,9 +188,9 @@ test.chr <- function(chr,
                      filePath="./chrcovers") {
   test.init(chr, filePath)
   ## print(CVG)
-  save(CVG, file="temp/cvg.RData")
-  save(SIZES, file="temp/sizes.RData")
-  save(CHR, file="temp/chr.RData")
+  ## save(CVG, file="temp/cvg.RData")
+  ## save(SIZES, file="temp/sizes.RData")
+  ## save(CHR, file="temp/chr.RData")
 
   PEAKS <<- list()
   PEAK.INFO <<- list()

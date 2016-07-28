@@ -2,7 +2,8 @@ from collections import defaultdict
 
 from natsort import natsorted
 from joblib import Parallel, delayed
-from rpy2.robjects import r
+from rpy2.robjects import r, pandas2ri
+ri2py = pandas2ri.ri2py
 
 from triform.helper_functions import (
     subset_RS4, subset_RS4_rows, subset_RS4_cols, df_to_iranges, df_to_rle)
@@ -40,82 +41,49 @@ zscore <- function(x,y,r=1) {  # r = size.y/size.x
 
 def _find_peaks(forward, reverse, chromosome, args):
 
+    # print(chromosome)
     merged_peaks = {}
     merged_info = {}
 
     pos_cvg = forward["cvg"]
     neg_cvg = reverse["cvg"]
 
-    # print("pos_cvg")
-    # print(pos_cvg)
-    # print("neg_cvg")
-    # print(neg_cvg)
-
-    # pos_cvg
-    # integer-Rle of length 57442693 with 22249 runs
-    #   Lengths: 2709647      29      71      29 ...     100      20     100      75
-    #   Values :       0       1       2       1 ...       1       0       1       0
-
-    # neg_cvg
-    # integer-Rle of length 57442693 with 21667 runs
-    #   Lengths: 2709676     100   31062     100 ...       5      89     100       3
-    #   Values :       0       1       0       1 ...       1       0       1       0
-
     number_peaks = 0
     for i in range(1, 4):
+        # print(i)
         p1 = reverse["peaks"][i]
         p2 = forward["peaks"][i]
-        # print("p1")
-        # print(p1)
-        # print("p2")
-        # print(p2)
 
-        # p1
-        # IRanges of length 138
-        #          start      end width
-        # [1]    3778332  3778354    23
-        # [2]    3779776  3779843    68
-        # [3]    7589496  7589586    91
-        # [4]   10534276 10534287    12
-        # [5]   10568307 10568406   100
-        # ...        ...      ...   ...
-        # [134] 57415256 57415288    33
-        # [135] 57420930 57420942    13
-        # [136] 57427449 57427541    93
-        # [137] 57428262 57428328    67
-        # [138] 57442124 57442137    14
-
-        # p2
-        # IRanges of length 150
-        #          start      end width
-        # [1]    2928874  2928970    97
-        # [2]    3772923  3773021    99
-        # [3]    4012212  4012307    96
-        # [4]    7087921  7088026   106
-        # [5]    7184247  7184346   100
-        # ...        ...      ...   ...
-        # [146] 57414596 57414627    32
-        # [147] 57414655 57414665    11
-        # [148] 57420858 57420934    77
-        # [149] 57434349 57434371    23
-        # [150] 57435799 57435896    98
-
-        # TODO:
         # if(!length(p1) | !length(p2)) next
+        either_empty = ri2py(r("function(p1, p2) (!length(p1) | !length(p2))")(
+            p1, p2))[0]
+        if either_empty:
+            # print("either_empty")
+            continue
 
         find_overlaps = r(
             "function(p1, p2) matrix(as.matrix(findOverlaps(p1,p2)),ncol=2)")
         ov = find_overlaps(p1, p2)
-        # TODO:
+
         # if(!nrow(ov)) next
+        overlap = ri2py(r["nrow"](ov))[0]
+        if not overlap:
+            # print("not overlap")
+            continue
 
         _find_duplicates = r(
             "function(ov, col) (ov[,col] %in% ov[duplicated(ov[,col]),col])")
         dup1 = _find_duplicates(ov, 1)
         dup2 = _find_duplicates(ov, 2)
-        is_multi = r["!"](r["|"](dup1, dup2))
-        # TODO:
-        ov = subset_RS4_rows(ov, is_multi)
+
+        is_multi = r["|"](dup1, dup2)
+        all_multi = ri2py(r["all"](is_multi))[0]
+        if all_multi:
+            # print("all_multi")
+            continue
+
+        rows = r["!"](is_multi)
+        ov = subset_RS4_rows(ov, rows)
 
         subset_peaks = r("function(p, ov, col) p[1:length(p) %in% ov[,col]]")
         p1 = subset_peaks(p1, ov, 1)
@@ -149,42 +117,14 @@ def _find_peaks(forward, reverse, chromosome, args):
 
         ok = r[">"](lags, args.min_shift)
 
-        # TODO:
         #if(!any(ok)) next
+        if not ri2py(r["any"](ok))[0]:
+            # print('not ri2py(r["any"](ok))[0]')
+            continue
 
         ov = subset_RS4_rows(ov, ok)
         peaks = subset_RS4(peaks, ok)
         n_peaks = r["length"](peaks)[0]
-
-        merged_peaks[i] = peaks
-
-        # not really used anywhere?
-        # merged_info[i, 1] = subset_RS4_cols(ov, 1)
-        # merged_info[i, 2] = subset_RS4_cols(ov, 2)
-
-        # print('reverse["peak_info"][i]')
-        # print(r["head"](reverse["peak_info"][i]))
-
-        # print('forward["peak_info"][i]')
-        # print(r["head"](forward["peak_info"][i]))
-
-        # indata["reverse", i, "peak_info"]
-        #   PEAK.LOC PEAK.CVG PEAK.SURL PEAK.SURR PEAK.NLP PEAK.WIDTH PEAK.START PEAK.END
-        # 1  3778343        3         0         0    2.146         23    3778332  3778354
-        # 2  3779810        4         0         0    2.631         68    3779776  3779843
-        # 3  7589541        4         0         0    2.631         91    7589496  7589586
-        # 4 10534282        3         0         0    2.146         12   10534276 10534287
-        # 5 10568356        3         0         0    2.146        100   10568307 10568406
-        # 6 10591945        4         0         0    2.631         73   10591909 10591981
-
-        # indata["forward", i, "peak_info"]
-        #   PEAK.LOC PEAK.CVG PEAK.SURL PEAK.SURR PEAK.NLP PEAK.WIDTH PEAK.START PEAK.END
-        # 1  2928922        5         0         0    3.106         97    2928874  2928970
-        # 2  3772972        3         0         0    2.631         99    3772923  3773021
-        # 3  4012260        3         0         0    2.146         96    4012212  4012307
-        # 4  7087974       14         0         0    7.217        106    7087921  7088026
-        # 5  7184296        7         0         0    4.039        100    7184247  7184346
-        # 6  8361022        5         0         0    3.106        102    8360972  8361073
 
         info1 = subset_RS4_rows(reverse["peak_info"][i],
                                 subset_RS4_cols(ov, 1))
@@ -229,6 +169,17 @@ def _find_peaks(forward, reverse, chromosome, args):
         #     var = vars()[x]
         #     print(x)
         #     print(r["length"](var))
+        assertions = []
+        for var in [peak_nlps, max_nlps, peak_locs, peaks, peak_cvg, peak_surL,
+                    peak_surR]:
+            length = ri2py(r["length"](var))[0]
+            assertions.append(length >= 1)
+
+        if not all(assertions):
+            # print("not all(assertions)")
+            continue
+
+        merged_peaks[i] = peaks
 
         dfr = r(
             """function(peak.nlps, max.nlps, peak.locs, peaks, peak.cvg, peak.surL, peak.surR, i, CHR) {

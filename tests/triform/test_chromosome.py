@@ -71,7 +71,7 @@ def chip_data(run_length_encodings_full):
                      for (k, v) in run_length_encodings_full.items()}}
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
                     expected_result):
 
@@ -87,8 +87,10 @@ def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
         print(_chromosome, direction, peak)
         actual_result = ri2py(results[_chromosome, direction]["peak_info"][
             peak])
-        # print(actual_result.head(10), "actual_result")
-        # print(expected_result.head(10), "expected_result")
+        print(actual_result.shape, "actual")
+        print(expected_result.shape, "expected")
+        print(actual_result.head(10), "actual_result")
+        print(expected_result.head(10), "expected_result")
 
         # print(actual_result.tail(), "actual_result")
         # print(expected_result.tail(), "expected_result")
