@@ -11,13 +11,14 @@ from bx.intervals.intersection import IntervalTree
 def exclude_redundant_peaks(indata, args):
 
     return Parallel(n_jobs=args.number_cores)(
-        delayed(_exclude_redundant_peaks)(data)
+        delayed(_exclude_redundant_peaks)(data, args)
         for chromosome, data in indata.items())
 
 
-def _exclude_redundant_peaks(indata):
+def _exclude_redundant_peaks(indata, args):
 
-    it = IntervalTree()
+    it1 = IntervalTree()
+    it23 = IntervalTree()
     # print("init")
 
     dfs = []
@@ -29,19 +30,38 @@ def _exclude_redundant_peaks(indata):
         locs = locs.str.split(":", expand=True).iloc[:, 1]
         locs = locs.str.split("-", expand=True).astype(int)
 
-        keys = []
-        for k, (start, end) in locs.iterrows():
+        if peak_type == 1:
+            keys = []
+            for k, (start, end) in locs.iterrows():
 
-            intervals = it.find(start, end)
-            if intervals:
-                continue
+                intervals = it1.find(start, end)
+                if intervals:
+                    continue
 
-            it.add(start, end, k)
-            keys.append(k)
+                it1.add(start, end, k)
+                keys.append(k)
 
-        indexes = pd.DataFrame(index=pd.Series(keys))
-        found_rows = df.ix[indexes.index]
-        dfs.append(found_rows)
+            indexes = pd.DataFrame(index=pd.Series(keys))
+            found_rows = df.ix[indexes.index]
+            dfs.append(found_rows)
+
+        else:
+
+            keys = []
+            for k, (start, end) in locs.iterrows():
+
+                intervals1 = it1.find(start, end)
+                intervals23 = it23.find(start - args.read_width,
+                                        end + args.read_width)
+                if intervals1 or intervals23:
+                    continue
+
+                it23.add(start, end, k)
+                keys.append(k)
+
+            indexes = pd.DataFrame(index=pd.Series(keys))
+            found_rows = df.ix[indexes.index]
+            dfs.append(found_rows)
 
     df = pd.concat(dfs, axis=0)
 
