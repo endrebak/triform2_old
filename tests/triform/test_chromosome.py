@@ -29,23 +29,6 @@ def expected_result():
 
 
 @pytest.fixture
-def expected_result_peaks_zscores():
-    _peaks = [pd.read_table(path,
-                            sep=" ")
-              for path in [
-                  "tests/test_results/p1.csv", "tests/test_results/p2.csv",
-                  "tests/test_results/p3.csv"
-              ]]
-    _zscores = [pd.read_table(path,
-                              sep=" ")
-                for path in [
-                    "tests/test_results/z1.csv", "tests/test_results/z2.csv",
-                    "tests/test_results/z3.csv"
-                ]]
-    return _peaks, _zscores
-
-
-@pytest.fixture
 def input_sizes(input_sizes):
     return {"chrY": input_sizes}
 
@@ -84,13 +67,13 @@ def test_chromosome(chip_data, input_data, chip_sizes, input_sizes, args,
     asserts = []
     for (_chromosome, direction,
          peak), expected_result in expected_result.items():
-        print(_chromosome, direction, peak)
+        # print(_chromosome, direction, peak)
         actual_result = ri2py(results[_chromosome, direction]["peak_info"][
             peak])
-        print(actual_result.shape, "actual")
-        print(expected_result.shape, "expected")
-        print(actual_result.head(10), "actual_result")
-        print(expected_result.head(10), "expected_result")
+        # print(actual_result.shape, "actual")
+        # print(expected_result.shape, "expected")
+        # print(actual_result.head(10), "actual_result")
+        # print(expected_result.head(10), "expected_result")
 
         # print(actual_result.tail(), "actual_result")
         # print(expected_result.tail(), "expected_result")

@@ -83,6 +83,7 @@ function(x,y,r=1) {  # r = size.y/size.x
 
 def compute_peaks_and_zscores(cvg, center, left, right, chip, input, ratios,
                               ratio, args):
+    # TODO: rewrite as a loop
 
     min_z = r["qnorm"](args.max_p, lower_tail=False)
     left_right = r["+"](left, right)
@@ -101,6 +102,9 @@ def compute_peaks_and_zscores(cvg, center, left, right, chip, input, ratios,
     peaks2 = r["slice"](zscores2, lower=min_z)
     peaks3 = r["slice"](zscores3, lower=min_z)
     peaks4 = r["slice"](zscores4, lower=min_z)
+    # print(peaks1)
+    # print(type(peaks1))
+    # print(r["typeof"](peaks1))
 
     subset1 = r[">"](r["width"](peaks1), args.min_width)
     subset2 = r[">"](r["width"](peaks2), args.min_width)
@@ -111,6 +115,12 @@ def compute_peaks_and_zscores(cvg, center, left, right, chip, input, ratios,
     peaks2 = subset_RS4(peaks2, subset2)
     peaks3 = subset_RS4(peaks3, subset3)
     peaks4 = subset_RS4(peaks4, subset4)
+    # print(subset1)
+    # print(type(subset1))
+    # print(r["typeof"](subset1))
+    # print(peaks1)
+    # print(type(peaks1))
+    # print(r["typeof"](peaks1))
 
     peaks1 = r["as"](peaks1, "IRanges")
     peaks2 = r["as"](peaks2, "IRanges")
