@@ -10,6 +10,7 @@ from triform.init import init_background, init_treatment
 from triform.make_treatment_control_same_length import (
     make_treatment_control_same_length)
 from triform.exclude_redundant_peaks import exclude_redundant_peaks
+from triform.create_bigwig import create_bigwig
 
 
 def run_triform(args):
@@ -26,6 +27,10 @@ def run_triform(args):
     init_chip, init_control = make_treatment_control_same_length(init_chip,
                                                                  init_control)
 
+    # for k, v in init_chip.items():
+    #     print(k)
+    #     for k2, v2 in init_chip.items():
+    #         print(k2)
     logging.info("Computing statistics.")
     results = chromosome(init_chip, init_control, treatment_sizes,
                          control_sizes, args)
@@ -63,3 +68,9 @@ def run_triform(args):
     # print(fdr_table)
 
     fdr_table.to_csv(stdout, sep=" ")
+
+    if args.bedgraph:
+        logging.info("Writing bedgraph to " + args.bedgraph + ".")
+        create_bigwig(init_chip, fdr_table, args)
+
+    logging.info("Done.")

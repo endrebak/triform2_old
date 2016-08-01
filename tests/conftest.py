@@ -1,5 +1,6 @@
 import pytest
 from glob import glob
+from os import devnull
 
 from collections import namedtuple
 
@@ -8,17 +9,17 @@ import pandas as pd
 __author__ = "Endre Bakken Stovner https://github.com/endrebak/"
 __license__ = "MIT"
 
-MockNamespace = namedtuple("MockNamespace",
-                           ["number_cores", "genome", "read_width",
-                            "flank_distance", "min_enrichment", "max_p",
-                            "min_shift", "min_width", "treatment", "control"])
+MockNamespace = namedtuple(
+    "MockNamespace", ["number_cores", "genome", "read_width", "flank_distance",
+                      "min_enrichment", "max_p", "min_shift", "min_width",
+                      "treatment", "control", "bedgraph"])
 
 
 @pytest.fixture(scope="session")
 def args_end_to_end_one_file():
     return MockNamespace(1, "hg19", 100, 150, 0.375, 0.1, 10, 10,
                          ["tests/test_data/PolII.bed"],
-                         ["tests/test_data/Input.bed"])
+                         ["tests/test_data/Input.bed"], devnull)
 
 
 @pytest.fixture(scope="session")
@@ -27,7 +28,7 @@ def args():
                          ["examples/srf_huds_Gm12878_rep1.bed",
                           "examples/srf_huds_Gm12878_rep2.bed"],
                          ["examples/backgr_huds_Gm12878_rep1.bed",
-                          "examples/backgr_huds_Gm12878_rep2.bed"])
+                          "examples/backgr_huds_Gm12878_rep2.bed"], devnull)
 
 
 @pytest.fixture(scope="session")

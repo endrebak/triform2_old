@@ -6,7 +6,11 @@ This is done in my free time (which I do not have much of), so progress will be 
 
 #### TODO
 
-The list will grow as I discover more stuff that needs to be done. Feel free to add your own.
+- when creating bedGraph, use run length encoding
+- ensure chromosomes operated on in correct order
+
+#### Done
+
 
 - Take input/chip files as command line arguments (easy)
 - Do not require input files to follow a naming convention (easy)

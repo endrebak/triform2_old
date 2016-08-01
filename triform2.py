@@ -58,6 +58,13 @@ parser.add_argument('--genome',
                     type=str,
                     help='''Genome version to use.''')
 
+parser.add_argument('--bedgraph',
+                    '-b',
+                    required=False,
+                    default="",
+                    type=str,
+                    help='''Path to write bedgraph file to, if desired.''')
+
 parser.add_argument(
     '--max-p',
     '-mp',
