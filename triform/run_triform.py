@@ -15,7 +15,7 @@ from triform.create_bigwig import create_bigwig
 
 def run_triform(args):
 
-    logging.info("Preprocessing data.")
+    logging.info("Preprocessing bed files.")
     treatment, control, treatment_sizes, control_sizes = preprocess(args)
 
     logging.info("Initializing treatment data.")
@@ -31,7 +31,7 @@ def run_triform(args):
     #     print(k)
     #     for k2, v2 in init_chip.items():
     #         print(k2)
-    logging.info("Computing statistics.")
+    logging.info("Computing region statistics.")
     results = chromosome(init_chip, init_control, treatment_sizes,
                          control_sizes, args)
     # print("results")
@@ -70,7 +70,7 @@ def run_triform(args):
     fdr_table.to_csv(stdout, sep=" ")
 
     if args.bedgraph:
-        logging.info("Writing bedgraph to " + args.bedgraph + ".")
+        logging.info("Writing bedgraph to file " + args.bedgraph + ".")
         create_bigwig(init_chip, fdr_table, args)
 
     logging.info("Done.")

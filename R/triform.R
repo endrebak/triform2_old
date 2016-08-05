@@ -961,3 +961,13 @@ findForms2Replicates <- function(direction, is.type, type,
 
   return(list(p1=p1, p2=p2, p3=p3, p4=p4, ratio=ratio, ref=ref, zscores.list=zscores.list, cvg=cvg))
 }
+
+## This reminded me about something: The code for excluding peaks might be biased in favor of type 2 peaks:
+
+## When excluding redundant peaks, which peaks are excluded hinges on the order of the peaks in the dataframe.
+
+## Let's say I have a dataframe with peaks of type 1,1,1,2,2,2,3,3,3
+
+## Let's further suppose all the type 2 and type 3 peaks overlap.
+
+## It seems to me that with the current implementation all the type 2 peaks will be kept, while all the type 3 peaks will be removed. Do you see this as bad for some reason? It seems to me type2 and 3 peaks should be "equal".

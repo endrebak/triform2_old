@@ -1,6 +1,5 @@
 import pandas as pd
-
-from natsort import natsorted
+import numpy as np
 
 from rpy2.robjects import r, pandas2ri, globalenv
 from rpy2.robjects.packages import importr
@@ -19,7 +18,7 @@ def create_bigwig(chip, fdr_table, args):
 
     dfs = []
     # TODO: use multiple cores
-    for chromosome, d in natsorted(chip.items()):
+    for chromosome, d in sorted(chip.items()):
         chromosome_key = chromosome + ":"
         idx = locs.index.get_level_values(0).str.contains(chromosome_key)
         chromosome_df = locs[idx]
@@ -53,44 +52,35 @@ def _create_bigwig(chip, fdr_table, chromosome):
     else:
         views = r["list"](r["viewApply"](overlaps, "as.vector"))
 
-    rowdicts = []
+    dfs = []
+    for (_, (start, _, _)), v in zip(fdr_table.iterrows(), views):
+        counts = pd.Series(ri2py(v)).reset_index(drop=True)
 
-    for (_, (start, end, _)), v in zip(fdr_table.iterrows(), views):
-        v = list(ri2py(v))
+        counts_shifted = counts.shift(-1)
 
-        current_count, current_start = v[0], 0
-        for pos, count in enumerate(v):
+        counts_changing = counts != counts_shifted
 
-            if count == current_count:
-                continue
+        idx = counts[counts_changing].index.get_level_values(0)
 
-            rowdict = {"Chromosome": chromosome,
-                       "Start": start + current_start,
-                       "End": start + pos + 1,
-                       "Count": current_count}
-            rowdicts.append(rowdict)
+        values = counts[idx].reset_index(drop=True)
 
-            current_start = pos + 1
-            current_count = count
-            current_end = start + pos + 1
+        sidx = pd.Series(idx)
+        lengths = (sidx.shift(-1) - sidx).shift()
+        lengths[0] = sidx[0]
 
-        if count != current_count:
-            continue
+        starts = sidx + start - sidx[0]
 
-        if end != current_end:
-            rowdict = {"Chromosome": chromosome,
-                       "Start": start + current_start,
-                       "End": end,
-                       "Count": current_count}
+        ends = starts.shift(-1)
+        ends.iloc[-1] = start + len(counts) - 1
 
-            print(rowdict)
-            if rowdict["Start"] < rowdict["End"]:
-                rowdicts.append(rowdict)
+        df = pd.concat([starts, ends, values], axis=1).astype(int)
+        df.insert(0, "Chromosome", chromosome)
+        df.columns = "Chromosome Start End Count".split()
 
-    if rowdicts:
-        df = pd.DataFrame.from_dict(rowdicts)[["Chromosome", "Start", "End",
-                                               "Count"]]
-        df["Count"] = df["Count"].astype(int)
-        return df.sort_values("Start").reset_index(drop=True)
+        dfs.append(df)
+
+    if dfs:
+        return pd.concat(dfs,
+                         axis=0).sort_values("Start").reset_index(drop=True)
     else:
         return pd.DataFrame()
