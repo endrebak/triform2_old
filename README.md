@@ -65,6 +65,7 @@ optional arguments:
 
 #### TODO
 
+- only require a certain percentage of ChIP files to show a peak?
 - ensure chromosomes operated on in correct order
 - merge type 2/3 peaks
 - create setup.py
@@ -74,6 +75,7 @@ optional arguments:
 - create wrapper for asciigenome to print peaks
 - create galaxy wrapper
 - add to coveralls
+- also make bedgraph of peaks before merging on strand? (ask advisors if this will be valuable)
 
 #### Done
 

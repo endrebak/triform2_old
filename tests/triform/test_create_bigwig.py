@@ -75,7 +75,7 @@ def chip_data(run_length_encodings_full):
                      for (k, v) in run_length_encodings_full.items()}}
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_create_bigwig(chip_data, fdr_table, expected_result, args):
 
     results = create_bigwig(chip_data, fdr_table, args)
