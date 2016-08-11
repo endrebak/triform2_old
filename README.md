@@ -79,6 +79,7 @@ optional arguments:
 
 #### Done
 
+- Make possible to use without input data
 - Suite of unit-tests
 - Implemented FDR calculations
 - Take input/chip files as command line arguments (easy)

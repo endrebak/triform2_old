@@ -9,7 +9,12 @@ from triform.preprocess.make_chromosome_cover_files import (
 def preprocess(args):
     """Return {chrom: list of chromcovers} map."""
     treatment, treatment_sizes = _preprocess(args.treatment, args)
+
+    if not args.control:
+        return treatment, treatment_sizes
+
     control, control_sizes = _preprocess(args.control, args)
+
     return treatment, control, treatment_sizes, control_sizes
 
 

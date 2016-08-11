@@ -1,3 +1,4 @@
+from bx.intervals.intersection import IntervalTree
 from numpy import int64
 
 from rpy2.robjects import r, pandas2ri
@@ -68,3 +69,28 @@ def df_to_iranges(df):
     return r("""function(df) {
     IRanges(start=as.integer(df[[1]]), end=as.integer(df[[2]]), width=as.integer(df[[3]]))}
     """)(df)
+
+
+def _locs_from_df(df):
+
+    locs = df.index.get_level_values(0).to_series()
+    locs = locs.str.split(":", expand=True).iloc[:, 1]
+    locs = locs.str.split("-", expand=True).astype(int)
+    locs.columns = "Start End".split()
+
+    return locs
+
+
+def _create_intervaltree(locs):
+
+    it = IntervalTree()
+
+    for k, (start, end) in locs.iterrows():
+
+        intervals = it.find(start, end)
+        if intervals:
+            continue
+
+        it.add(start, end, k)
+
+    return it

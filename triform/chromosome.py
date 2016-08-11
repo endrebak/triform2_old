@@ -65,13 +65,14 @@ def compute_ratios(chip_sizes, input_size):
     ratios = dict()
     for f, d in chip_sizes.items():
         ratios[f] = input_size / d
+
     return ratios
 
 
 def zscores(x, y, ratio=1):
 
     _zscores = r("""
-function(x,y,r=1) {  # r = size.y/size.x
+function(x,y,r) {  # r = size.y/size.x
   dif <- (r*x-y)
   zs <- dif/sqrt(r*(x+y))
   zs[!dif] <- 0
@@ -81,22 +82,39 @@ function(x,y,r=1) {  # r = size.y/size.x
     return _zscores(x, y, ratio)
 
 
+def zscores_no_control(x, ratio=1):
+
+    _zscores = r("""
+function(x,r) {  # r = size.y/size.x
+  dif <- (r*x)
+  zs <- dif/sqrt(r*(x))
+  zs[!dif] <- 0
+  zs
+}
+""")
+    return _zscores(x, ratio)
+
+
 def compute_peaks_and_zscores(cvg, center, left, right, chip, input, ratios,
                               ratio, args):
     # TODO: rewrite as a loop
-
     min_z = r["qnorm"](args.max_p, lower_tail=False)
     left_right = r["+"](left, right)
 
     ok1 = compute_ok1(chip)
     ok2 = compute_ok23(chip, 2)
     ok3 = compute_ok23(chip, 3)
-    ok4 = compute_ok4(ratios, center, input)
+
+    if input:
+        ok4 = compute_ok4(ratios, center, input)
 
     zscores1 = r["*"](ok1, zscores(cvg, left_right, 2))
     zscores2 = r["*"](ok2, zscores(cvg, left))
     zscores3 = r["*"](ok3, zscores(cvg, right))
-    zscores4 = r["*"](ok4, zscores(cvg, input, ratio))
+    if input:
+        zscores4 = r["*"](ok4, zscores(cvg, input, ratio))
+    else:
+        zscores4 = zscores_no_control(cvg, 1)
 
     peaks1 = r["slice"](zscores1, lower=min_z)
     peaks2 = r["slice"](zscores2, lower=min_z)
@@ -169,9 +187,21 @@ def transform_input_sizes(sizes):
 def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
 
     chip_data = transform_input_data(chip_data)
-    input_data = transform_input_data(input_data)
-
     chip_sizes = transform_input_sizes(chip_sizes)
+
+    if not input_data:
+        keys = list(product(chip_data, ["forward", "reverse"]))
+
+        results = Parallel(n_jobs=args.number_cores)(
+            delayed(_chromosome)(chip_data[chromosome][direction], None,
+                                 chip_sizes[chromosome][direction], None, args)
+            for chromosome, direction in keys)
+
+        results_dict = {k: v for k, v in zip(keys, results)}
+
+        return results_dict
+
+    input_data = transform_input_data(input_data)
     input_sizes = transform_input_sizes(input_sizes)
 
     assert len(chip_data) == len(input_data) == len(chip_sizes) == len(
@@ -192,12 +222,17 @@ def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
 def _chromosome(chip, input_data, chip_sizes, input_data_sizes, args):
 
     results = defaultdict(dict)
-    input_data = collect_key(input_data, "center").values()
-    input_data = r["Reduce"]("+", input_data)
 
-    ratios = compute_ratios(chip_sizes, sum(input_data_sizes.values()))
+    if input_data:
+        input_data = collect_key(input_data, "center").values()
+        input_data = r["Reduce"]("+", input_data)
 
-    ratio = sum(input_data_sizes.values()) / sum(chip_sizes.values())
+        ratios = compute_ratios(chip_sizes, sum(input_data_sizes.values()))
+
+        ratio = sum(input_data_sizes.values()) / sum(chip_sizes.values())
+    else:
+        ratio = 1
+        ratios = None
 
     center = collect_key(chip, "center")
     left = collect_key(chip, "left")
@@ -230,11 +265,16 @@ def _chromosome(chip, input_data, chip_sizes, input_data_sizes, args):
         peak_locs = r["round"](peak_locs)
 
         peak_cvg = subset_RS4(cvg, peak_locs, True)
-        peak_ref = subset_RS4(input_data, peak_locs, True)
+        if input_data:
+            peak_ref = subset_RS4(input_data, peak_locs, True)
 
-        peak_enrich_cvg = r["+"](1, r["*"](ratio, peak_cvg))
-        peak_enrich_ref = r["+"](1, peak_ref)
-        peak_enrich = r["/"](peak_enrich_cvg, peak_enrich_ref)
+        if input_data:
+
+            peak_enrich_cvg = r["+"](1, r["*"](ratio, peak_cvg))
+            peak_enrich_ref = r["+"](1, peak_ref)
+            peak_enrich = r["/"](peak_enrich_cvg, peak_enrich_ref)
+        else:
+            peak_enrich = peak_cvg
 
         # min_er will always be defined as it is set in the first loop, but ugh the code
         if peak_type == 1:

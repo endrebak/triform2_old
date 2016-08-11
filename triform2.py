@@ -14,7 +14,7 @@ from rpy2.robjects import r
 import triform.config.logging_settings
 
 from triform.version import __version__
-from triform.run_triform import run_triform
+from triform.run_triform import (run_triform, run_triform_no_control)
 
 parser = argparse.ArgumentParser(
     description=
@@ -37,7 +37,7 @@ parser.add_argument(
 parser.add_argument(
     '--control',
     '-c',
-    required=True,
+    required=False,
     type=str,
     nargs='+',
     help='''Control (input) file(s) in bam/bed/bed.gz/bed.bz2 format.''')
@@ -130,7 +130,10 @@ if __name__ == '__main__':
     print("# triform2 " + " ".join(argv[1:]))
     logging.info("# triform2 " + " ".join(argv[1:]))
 
-    run_triform(args)
+    if args.control:
+        run_triform(args)
+    else:
+        run_triform_no_control(args)
 
     # logging.info("Preprocessing data.")
     # treatment, control, treatment_sizes, control_sizes = preprocess(args)

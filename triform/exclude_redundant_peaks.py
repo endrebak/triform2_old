@@ -5,7 +5,7 @@ from rpy2.robjects import r, pandas2ri, globalenv
 pandas2ri.activate()
 ri2py = pandas2ri.ri2py
 
-from bx.intervals.intersection import IntervalTree
+from triform.helper_functions import _locs_from_df, _create_intervaltree
 
 
 def exclude_redundant_peaks(indata, args):
@@ -13,31 +13,6 @@ def exclude_redundant_peaks(indata, args):
     return Parallel(n_jobs=args.number_cores)(
         delayed(_exclude_redundant_peaks)(data, args)
         for chromosome, data in indata.items())
-
-
-def _locs_from_df(df):
-
-    locs = df.index.get_level_values(0).to_series()
-    locs = locs.str.split(":", expand=True).iloc[:, 1]
-    locs = locs.str.split("-", expand=True).astype(int)
-    locs.columns = "Start End".split()
-
-    return locs
-
-
-def _create_intervaltree(locs):
-
-    it = IntervalTree()
-
-    for k, (start, end) in locs.iterrows():
-
-        intervals = it.find(start, end)
-        if intervals:
-            continue
-
-        it.add(start, end, k)
-
-    return it
 
 
 def _exclude_type23_overlapping1(type1_it, type2_locs, type3_locs):
