@@ -3,11 +3,7 @@ from setuptools import setup, find_packages
 
 from triform.version import __version__
 
-try:
-    os.getenv("TRAVIS")
-    install_requires = ["coveralls"]
-except:
-    pass
+install_requires = ["coveralls"]
 
 setup(
     name="triform2",
