@@ -20,12 +20,12 @@ install:
   - conda update -q conda
   - conda config --add channels bioconda
   - conda config --add channels r
-  - conda config --add channels bcbio
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION joblib numpy scipy pandas pytest pytest-cov rpy2 bioconductor-iranges bioconductor-biocgenerics bioconductor-genomicranges r bx-python
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION joblib numpy scipy pandas pytest pytest-cov rpy2 bioconductor-iranges bioconductor-biocgenerics bioconductor-genomicranges r natsort
   - source activate test-environment
   - python setup.py install
+  - pip install bx-python
   - python --version
   - python -c 'import pandas as pd; print(pd.__version__)'
   - ls tests
