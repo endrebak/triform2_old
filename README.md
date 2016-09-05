@@ -2,7 +2,7 @@
 
 ChIP-Seq caller for transcription factor binding sites.
 
-Very alpha edition, so please post questions, issues, docrequests etc at [the triform2 google groups.](https://groups.google.com/forum/#!forum/triform2)
+Very alpha edition, so please post questions, issues, docrequests etc at [the triform2 google groups forum.](https://groups.google.com/forum/#!forum/triform2)
 
 #### Install
 
