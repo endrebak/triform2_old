@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pkg_resources
 
 import logging
@@ -134,32 +136,3 @@ if __name__ == '__main__':
         run_triform(args)
     else:
         run_triform_no_control(args)
-
-    # logging.info("Preprocessing data.")
-    # treatment, control, treatment_sizes, control_sizes = preprocess(args)
-
-    # logging.info("Initializing treatment data.")
-    # init_treatment = init_treatment(treatment, args)
-
-    # logging.info("Initializing background data.")
-    # init_control = init_background(control, args)
-
-    # init_treatment, init_control = make_treatment_control_same_length(
-    #     init_treatment, init_control)
-
-    # logging.info("Computing statistics.")
-    # results = chromosome(init_treatment, init_control, treatment_sizes,
-    #                      control_sizes, args)
-    # print(results)
-
-    # logging.info("Finding enriched peaks.")
-    # peaks = find_peaks(results, args)
-    # print(peaks)
-
-    # logging.info("Excluding redundant peaks.")
-    # peak_info = exclude_redundant_peaks(peaks, args)
-
-    # logging.info("Computing FDR.")
-    # fdr_table = compute_fdr(peak_info)
-
-    # print(fdr_table)

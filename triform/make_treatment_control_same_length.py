@@ -15,9 +15,9 @@ def make_treatment_control_same_length(treatment, control):
 
         chr_treatment, chr_control = treatment[chromosome], control[chromosome]
 
-        treatment_maxlen = r["max"](r["sapply"](chr_treatment.values(),
+        treatment_maxlen = r["max"](r["sapply"](list(chr_treatment.values()),
                                                 length_of_rle))
-        control_maxlen = r["max"](r["sapply"](chr_control.values(),
+        control_maxlen = r["max"](r["sapply"](list(chr_control.values()),
                                               length_of_rle))
 
         maxlen = r["max"](treatment_maxlen, control_maxlen)

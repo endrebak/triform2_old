@@ -3,8 +3,6 @@ ri2py = pandas2ri.ri2py
 
 
 def compute_fdr(dfs):
-    """
-    """
 
     df = r["do.call"]("rbind", dfs)
 

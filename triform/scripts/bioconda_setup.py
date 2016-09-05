@@ -1,13 +1,8 @@
 import sys
 from setuptools import setup, find_packages
 
-from triform.version import __version__
-
-try:
-    os.getenv("TRAVIS")
-    install_requires = ["coveralls"]
-except:
-    pass
+version_path = os.path.join(os.path.dirname(__file__), "..", "version.py")
+version = open(version_path).readline().split('"')[1]
 
 setup(
     name="triform2",
@@ -23,7 +18,6 @@ setup(
     url="http://github.com/endrebak/triform2",
     keywords=["ChIP-Seq"],
     license=["MIT"],
-    install_requires=install_requires,
     classifiers=[
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",

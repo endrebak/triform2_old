@@ -1,8 +1,8 @@
 # triform2
 
-Superfast, statistically sophisticated chip-seq peak caller to find transcription factor binding sites.
+ChIP-Seq caller for transcription factor binding sites.
 
-Very alpha edition, but works for me.
+Very alpha edition, so please post questions, issues, docrequests etc at [the triform2 google groups.](https://groups.google.com/forum/#!forum/triform2)
 
 #### Install
 

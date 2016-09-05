@@ -1,5 +1,10 @@
 from collections import defaultdict
-from itertools import izip_longest
+
+try:
+    from itertools import izip_longest
+except ImportError:
+    from itertools import zip_longest
+
 from io import StringIO
 
 import pandas as pd

@@ -224,7 +224,7 @@ def _chromosome(chip, input_data, chip_sizes, input_data_sizes, args):
     results = defaultdict(dict)
 
     if input_data:
-        input_data = collect_key(input_data, "center").values()
+        input_data = list(collect_key(input_data, "center").values())
         input_data = r["Reduce"]("+", input_data)
 
         ratios = compute_ratios(chip_sizes, sum(input_data_sizes.values()))

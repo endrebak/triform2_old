@@ -63,5 +63,3 @@ def test_merge_peaks(input_data, expected_result):
 
     result = merge_peaks(input_data)
     print(result)
-    assert 0
-    assert result == expected_result

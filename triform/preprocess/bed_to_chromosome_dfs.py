@@ -14,8 +14,8 @@ def bed_to_chromosome_dfs(bed_file, args):
         delayed(_bed_to_chromosomes)(bed_file, chromosome)
         for chromosome in chromosomes)
 
-    text_dfs = OrderedDict([(
-        c, df) for (c, df) in zip(chromosomes, text_dfs) if df != ""])
+    text_dfs = OrderedDict([(c, df.decode(
+    )) for (c, df) in zip(chromosomes, text_dfs) if len(df.strip()) != 0])
     return text_dfs
 
 
