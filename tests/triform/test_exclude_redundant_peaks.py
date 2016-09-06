@@ -35,11 +35,6 @@ def input_data():
                                row_names=1)
         results["peak_info"][peak_type] = info
 
-        # peaks = r["read.table"]("tests/test_data/merge_peaks_%s.csv" %
-        #                         peak_type,
-        #                         sep=" ")
-        # results["peaks"][peak_type] = df_to_iranges(peaks)
-
     return results
 
 
