@@ -44,7 +44,7 @@ def test_init_treatment(expected_result_chip, input_data_treatment, args):
         actual_result = ri2py(rle_to_df(v)).astype(np.int64)
         print(expected_result.tail())
         print(actual_result.tail())
-        assertion = expected_result.equals(actual_result)
+        assertion = np.allclose(expected_result, actual_result)
         print(assertion)
         asserts.append(assertion)
 
@@ -61,7 +61,7 @@ def test_init_background(expected_result_input, input_data_control, args):
     for k, v in results_control.items():
         expected_result = expected_result_input[k]
         actual_result = ri2py(rle_to_df(v)).astype(np.int64)
-        asserts.append(expected_result.equals(actual_result))
+        asserts.append(np.allclose(expected_result, actual_result))
 
     print(asserts)
 

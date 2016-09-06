@@ -40,7 +40,7 @@ def test_preprocess(args, expected_result_treatment, expected_result_control):
     for k, l in t.items():
         l_as_df = ri2py(rle_to_df(l)).astype(np.int64)
 
-        assert expected_result_treatment[k].equals(l_as_df)
+        assert np.allclose(expected_result_treatment[k], l_as_df)
 
     c = control["chrY"]
     print(expected_result_control.keys(), 'expected_result_control.keys()')
@@ -54,4 +54,4 @@ def test_preprocess(args, expected_result_treatment, expected_result_control):
         print(expected_result_control[k].head(),
               "expected_result_control[k].head()")
 
-        assert expected_result_control[k].equals(l_as_df)
+        assert np.allclose(expected_result_control[k], l_as_df)

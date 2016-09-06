@@ -58,6 +58,6 @@ def test_make_treatment_control_same_length(input_data, expected_result):
     for k, v in treatment_result["chrY"].items():
         v = rle_to_pandas_df(v)
         x = x_treatment[k]
-        assertions.append(v.equals(x))
+        assertions.append(np.allclose(v, x))
 
     assert all(assertions)

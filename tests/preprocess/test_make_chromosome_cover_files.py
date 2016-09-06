@@ -63,4 +63,5 @@ def test_make_chromosome_cover_files_chip(indata_chip,
         print("actual")
         print(actual)
         print("expected")
-        assert actual.equals(v)
+        print(v)
+        assert allclose(actual, v)
