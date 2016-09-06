@@ -11,7 +11,7 @@ setup(
     # package_dir=find_packages(),
     package_data={"triform": ["scripts/chromsizes/*.chromsizes"]},
     scripts=["bin/triform2"],
-    version=__version__,
+    version=version,
     description=
     "Improved sensitivity, specificity and control of false discovery rates in ChIP-Seq peak finding.",
     author="Endre Bakken Stovner",
