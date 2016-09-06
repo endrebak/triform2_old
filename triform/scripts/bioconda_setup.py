@@ -1,5 +1,6 @@
 import sys
 from setuptools import setup, find_packages
+import os
 
 version_path = os.path.join(os.path.dirname(__file__), "..", "version.py")
 version = open(version_path).readline().split('"')[1]
