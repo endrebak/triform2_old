@@ -31,7 +31,8 @@ def input_data():
 
         info = r["read.table"]("tests/test_data/find_peaks_result_%s.csv" %
                                peak_type,
-                               sep=" ")
+                               sep=" ",
+                               row_names=1)
         results["peak_info"][peak_type] = info
 
         # peaks = r["read.table"]("tests/test_data/merge_peaks_%s.csv" %
@@ -44,6 +45,8 @@ def input_data():
 
 @pytest.mark.unit
 def test_exclude_redundant_peaks(input_data, expected_result, args):
+
+    print(input_data, "input_data")
 
     result = _exclude_redundant_peaks(input_data, args)
 
