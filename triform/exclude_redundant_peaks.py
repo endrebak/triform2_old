@@ -33,8 +33,6 @@ def _exclude_type23_overlapping1(type1_it, type2_locs, type3_locs):
 def _exclude_redundant_peaks(indata, args):
 
     peaks1 = indata["peak_info"][1]
-    print(peaks1)
-    print(type(peaks1))
     type1_peaks = ri2py(peaks1)
     type1_locs = _locs_from_df(type1_peaks)
     type1_it = _create_intervaltree(type1_locs)

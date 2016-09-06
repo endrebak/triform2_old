@@ -73,9 +73,13 @@ def df_to_iranges(df):
 
 def _locs_from_df(df):
 
+    print(df.head())
     locs = df.index.get_level_values(0).to_series()
-    locs = locs.str.split(":", expand=True).iloc[:, 1]
-    locs = locs.str.split("-", expand=True).astype(int)
+    print(locs.head())
+    locs = locs.astype(str).str.split(":", expand=True).iloc[:, 1]
+    print(locs.head())
+    locs = locs.astype(str).str.split("-", expand=True).astype(int)
+    print(locs.head())
     locs.columns = "Start End".split()
 
     return locs
