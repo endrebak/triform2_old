@@ -1,5 +1,6 @@
 import logging
 from sys import stdout
+from os.path import basename
 
 from triform.helper_functions import subset_RS4
 from triform.chromosome import chromosome
@@ -26,9 +27,28 @@ def run_triform(args):
     if args.matrix:
         logging.info("Creating treatment matrix.")
         treatment_matrixes = find_read_midpoints(treatment_iranges, args)
-        print(list(treatment_matrixes.values())[0]["chrY"])
-        logging.info("Creating control matrix.")
-        control_matrixes = find_read_midpoints(control_iranges, args)
+        # logging.info("Creating control matrix.")
+        # control_matrixes = find_read_midpoints(control_iranges, args)
+        logging.info("Merging matrixes")
+
+        # assert set(treatment_matrixes) == set(control_matrixes), "Chromosomes in ChIP and input differ"
+
+        # for chromosome in set(treatment_matrixes).intersection(control_matrixes):
+        chromosome = "chrY"
+        all_granges = iter(
+            treatment_matrixes[chromosome])  # + control_matrixes[chromosome])
+        name, u = next(all_granges)
+
+        for (fname, gr) in all_granges:
+            _merge = r("""function(u, gr){{
+
+             elementMetadata(u[overlapsAny(u, gr1)])${}= = elementMetadata(gr1)[,1]
+
+             }}""".format(basename(fname)))
+
+            u = _merge(u, gr)
+
+        print(u)
 
         # need for loop to insert names of files (instead of gr1, gr2)
         # elementMetadata(u[overlapsAny(u, gr1)])$gr1 = elementMetadata(gr1)[,1]
