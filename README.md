@@ -65,6 +65,7 @@ optional arguments:
 
 #### TODO
 
+- check that there are type 1, 2, 3 peaks before trying to exclude them
 - only require a certain percentage of ChIP files to show a peak?
 - ensure chromosomes operated on in correct order
 - merge type 2/3 peaks

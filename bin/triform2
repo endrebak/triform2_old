@@ -1,31 +1,25 @@
 #!/usr/bin/env python
 
-import pkg_resources
-
 import logging
-from collections import defaultdict, OrderedDict
 import os
 import argparse
-from sys import argv
-import pandas as pd
-from joblib import Parallel, delayed
-import rpy2
-from rpy2.robjects.packages import importr
-from rpy2.robjects import r
-
-import triform.config.logging_settings
+from sys import argv, version_info
 
 from triform.version import __version__
-from triform.run_triform import (run_triform, run_triform_no_control)
 
 parser = argparse.ArgumentParser(
     description=
-    """Improved sensitivity, specificity and control of false discovery rates in ChIP-Seq peak finding.
+    """Triform2 ({}): Improved sensitivity, specificity and control of false discovery rates in ChIP-Seq peak finding.
 
 (Visit github.com/endrebak/triform for examples and help.)
 
-    """,
+    """.format(__version__),
     prog=os.path.basename(__file__))
+
+parser.add_argument('--version',
+                    '-v',
+                    action='version',
+                    version='%(prog)s {}'.format(__version__))
 
 parser.add_argument(
     '--treatment',
@@ -65,7 +59,25 @@ parser.add_argument('--bedgraph',
                     required=False,
                     default="",
                     type=str,
-                    help='''Path to write bedgraph file to, if desired.''')
+                    help='''Path to write bedgraph file to.''')
+
+parser.add_argument(
+    '--matrix',
+    '-m',
+    required=False,
+    type=str,
+    help=
+    '''Write counts of midpoints of reads to binned (tiled) genome matrix.''')
+
+parser.add_argument(
+    '--matrix-bin-size',
+    '-mbs',
+    required=False,
+    type=int,
+    default=10,
+    help=
+    '''Size of genomic bins used when writing counts of midpoints of reads to binned genome matrix. Default: 10.
+    (Has no influence on triform algorithm.)''')
 
 parser.add_argument(
     '--max-p',
@@ -74,7 +86,7 @@ parser.add_argument(
     default=0.1,
     type=float,
     help=
-    '''Used to calculate minimum upper-tail z-value (default corresponds to standard normal p = 0.1)''')
+    '''[Advanced] Used to calculate minimum upper-tail z-value (default corresponds to standard normal p = 0.1)''')
 
 parser.add_argument(
     '--min-shift',
@@ -83,7 +95,7 @@ parser.add_argument(
     default=10,
     type=int,
     help=
-    '''Minimum inter-strand shift (lag) between peak coverage distributions (default 10 bp).''')
+    '''[Advanced] Minimum inter-strand shift (lag) between peak coverage distributions (default 10 bp).''')
 
 parser.add_argument(
     '--min-width',
@@ -92,7 +104,7 @@ parser.add_argument(
     default=10,
     type=int,
     help=
-    '''Minimum number of bp (peak width) in peak-like region (default 10 bp).''')
+    '''[Advanced] Minimum number of bp (peak width) in peak-like region (default 10 bp).''')
 
 parser.add_argument(
     '--read-width',
@@ -101,7 +113,7 @@ parser.add_argument(
     default=100,
     type=int,
     help=
-    '''Read width w, symmetrically extended to a fixed value. Must be larger than the flank size. Default: 100 bp.''')
+    '''[Advanced] Read width w, symmetrically extended to a fixed value. Must be larger than the flank size. Default: 100 bp.''')
 
 parser.add_argument(
     '--flank-distance',
@@ -110,7 +122,7 @@ parser.add_argument(
     default=150,
     type=int,
     help=
-    '''Fixed spacing between central and flanking locations (must be > w). Default: 150 bp.''')
+    '''[Advanced] Fixed spacing between central and flanking locations (must be > w). Default: 150 bp.''')
 
 parser.add_argument(
     '--min-enrichment',
@@ -119,18 +131,21 @@ parser.add_argument(
     default=0.375,
     type=float,
     help=
-    '''Minimum local enrichment ratio (default 3/8 quantile of the enrichment ratio)''')
-
-parser.add_argument('--version',
-                    '-v',
-                    action='version',
-                    version='%(prog)s {}'.format(__version__))
+    '''[Advanced] Minimum local enrichment ratio (default 3/8 quantile of the enrichment ratio)''')
 
 if __name__ == '__main__':
+
+    from rpy2 import __version__ as rpy2v
+    from pandas import __version__ as pdv
+    import triform.config.logging_settings
+    from triform.run_triform import (run_triform, run_triform_no_control)
     args = parser.parse_args()
 
-    print("# triform2 " + " ".join(argv[1:]))
-    logging.info("# triform2 " + " ".join(argv[1:]))
+    command = "# triform2 " + " ".join(argv[
+        1:]) + " # triform2: {}, rpy2: {}, pandas: {}, python: {}".format(
+            __version__, rpy2v, pdv, ".".join([str(i) for i in version_info]))
+    print(command)
+    logging.info(command)
 
     if args.control:
         run_triform(args)

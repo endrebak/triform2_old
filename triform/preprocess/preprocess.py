@@ -8,14 +8,15 @@ from triform.preprocess.make_chromosome_cover_files import (
 
 def preprocess(args):
     """Return {chrom: list of chromcovers} map."""
-    treatment, treatment_sizes = _preprocess(args.treatment, args)
+    treatment, treatment_sizes, treatment_iranges = _preprocess(args.treatment,
+                                                                args)
 
     if not args.control:
-        return treatment, treatment_sizes
+        return treatment, treatment_sizes, treatment_iranges
 
-    control, control_sizes = _preprocess(args.control, args)
+    control, control_sizes, control_iranges = _preprocess(args.control, args)
 
-    return treatment, control, treatment_sizes, control_sizes
+    return treatment, control, treatment_sizes, control_sizes, treatment_iranges, control_iranges
 
 
 def _preprocess(files, args):
@@ -25,12 +26,12 @@ def _preprocess(files, args):
         chromosome_dfs = bed_to_chromosome_dfs(file, args)
         ranged_data_per_file[file] = make_ranged_data(chromosome_dfs, args)
 
-    # print(ranged_data_per_file.keys(), 'ranged_data_per_file.keys()')
-    chrcovers, sizes = make_chromosome_cover_files(ranged_data_per_file, args)
+    chrcovers, sizes, iranges = make_chromosome_cover_files(
+        ranged_data_per_file, args)
 
     py_sizes = defaultdict(dict)
     for c, d in sizes.items():
         for k, d2 in d.items():
             py_sizes[c][k] = int(d2[0])
 
-    return chrcovers, py_sizes
+    return chrcovers, py_sizes, iranges

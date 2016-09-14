@@ -11,14 +11,10 @@ from triform.helper_functions import subset_RS4_2
 
 def make_chromosome_cover_files(ranged_data_per_file, args):
 
-    # sys.stdout = sys.stderr
     cvgs = defaultdict(dict)
     sizes = defaultdict(dict)
-    # print(ranged_data_per_file, "ranged_data_per_file")
-    # print(ranged_data_per_file.keys(), "ranged_data_per_file.keys()")
+    iranges = defaultdict(dict)
     for f, chromosome_granges in ranged_data_per_file.items():
-        # print(f, "f")
-        # print(chromosome_granges, "chromosome_granges")
 
         ranged_data = Parallel(n_jobs=args.number_cores)(
             delayed(_make_chromosome_cover_files)(df, args)
@@ -26,10 +22,8 @@ def make_chromosome_cover_files(ranged_data_per_file, args):
 
         assert len(ranged_data) == len(chromosome_granges)
 
-        for c, (cvg, size) in zip(chromosome_granges.keys(), ranged_data):
-            # print(c, "c")
-            # print(cvg, "cvg")
-            # print(size, "size")
+        for c, (cvg, size, ranged_data) in zip(chromosome_granges.keys(),
+                                               ranged_data):
 
             cvgs[c][f, "forward"] = cvg["+"]
             cvgs[c][f, "reverse"] = cvg["-"]
@@ -37,11 +31,15 @@ def make_chromosome_cover_files(ranged_data_per_file, args):
             sizes[c][f, "forward"] = size["+"]
             sizes[c][f, "reverse"] = size["-"]
 
-    return cvgs, sizes
+            iranges[f][c] = ranged_data
+
+    return cvgs, sizes, iranges
 
 
 def _make_chromosome_cover_files(granges, args):
-    """Write description as command ending in a period."""
+    """Find midpoint of read and extend by read_width/2 in both directions."""
+
+    # TODO: check for very long reads (spliced alignments)
 
     importr("GenomicRanges")
 
@@ -64,6 +62,8 @@ def _make_chromosome_cover_files(granges, args):
     reverse_iranges = get_iranges(strand_starts, strand_gaps, strand_widths,
                                   "-")
 
+    iranges = r["sort"](r["c"](forward_iranges, reverse_iranges))
+
     iranges_list = r(
         'function(irneg, irpos) IRangesList("-"=irneg, "+"=irpos)')(
             reverse_iranges, forward_iranges)
@@ -73,4 +73,4 @@ def _make_chromosome_cover_files(granges, args):
     sizes = {"+": subset_RS4_2(strand_sizes, "+"),
              "-": subset_RS4_2(strand_sizes, "-")}
 
-    return cvgs, sizes
+    return cvgs, sizes, iranges
