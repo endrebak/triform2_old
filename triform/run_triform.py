@@ -25,10 +25,10 @@ def run_triform(args):
 
     if args.matrix:
         logging.info("Creating treatment matrix.")
-        treatment_matrixes = create_matrix(treatment_iranges, args)
+        treatment_matrixes = find_read_midpoints(treatment_iranges, args)
         print(list(treatment_matrixes.values())[0]["chrY"])
         logging.info("Creating control matrix.")
-        control_matrixes = create_matrix(control_iranges, args)
+        control_matrixes = find_read_midpoints(control_iranges, args)
 
         # need for loop to insert names of files (instead of gr1, gr2)
         # elementMetadata(u[overlapsAny(u, gr1)])$gr1 = elementMetadata(gr1)[,1]

@@ -8,8 +8,8 @@ def find_read_midpoints(iranges, args):
     for f, irange_dict in iranges.items():
 
         genomic_ranges = Parallel(n_jobs=args.number_cores)(
-            delayed(_read_midpoints(df, chromosome, args.matrix_bin_size)
-                    for chromosome, df in irange_dict.items()))
+            delayed(_read_midpoints)(df, chromosome, args.matrix_bin_size)
+            for chromosome, df in irange_dict.items())
 
         read_midpoints[f] = {chromosome: gr
                              for (chromosome, gr) in zip(irange_dict.keys(),
