@@ -14,12 +14,8 @@ def find_read_midpoints(iranges, args):
                                           args.matrix_bin_size)
             for chromosome, df in irange_dict.items())
 
-        for chromosome, gr in irange_dict.items():
+        for chromosome, gr in zip(irange_dict.keys(), genomic_ranges):
             read_midpoints[chromosome].append((filename, gr))
-
-        # read_midpoints[f] = {chromosome: gr
-        #                      for (chromosome, gr) in zip(irange_dict.keys(),
-        #                                                  genomic_ranges)}
 
     return read_midpoints
 
@@ -28,29 +24,40 @@ def _find_read_midpoints(data, chromosome, filename, tilewidth=10):
 
     iranges_to_midpoint = r("""function(ir) {
     midpoint = (start(ir) + end(ir)) / 2
-    coverage(IRanges(midpoint, midpoint))
+    cv = coverage(IRanges(midpoint, midpoint))
+    cv
     }""")
 
     midpoint = iranges_to_midpoint(data)
 
-    rle_to_granges = r(
-        """function(runlengths, chromosome, filename, tilewidth) {
-    gr = GRanges(chromosome,IRanges(cumsum(c(0,runLength(runlengths)[-nrun(runlengths)])),
-                              width=runLength(runlengths)),
-             runlengths = runValue(runlengths))
+    rle_to_tiles = r("""function(runlengths, chromosome, filename, tilewidth) {
+
+        gr = GRanges(chromosome,IRanges(start(runlengths) - 1,
+       width=runLength(runlengths)),
+        runlengths = runValue(runlengths))
+
     gr = gr[elementMetadata(gr)[,1] != 0]
     seqlengths(gr) = suppressWarnings(max(end(gr)))
     tg = tileGenome(seqinfo(gr), tilewidth=tilewidth, cut.last.tile.in.chrom=TRUE)
+    tg
+    }
+        """)
 
+    tiles = rle_to_tiles(midpoint, chromosome, filename, tilewidth)
+
+    give_tiles_counts = r(
+        """function(runlengths, tg, chromosome, filename, tilewidth){{
     runlengthsL = RleList(runlengths)
     names(runlengthsL) = chromosome
 
-    ba = binnedAverage(trim(tg), runlengthsL, varname="runlengths")
+    ba = binnedAverage(tg, runlengthsL, varname="runlengths")
     ba = ba[elementMetadata(ba)[,1] != 0]
     elementMetadata(ba)[,1] = elementMetadata(ba)[,1] * tilewidth
-    names(values(ba)) = filename
+    names(values(ba)) = "counts"
     ba
-    }
+    }}
     """)
 
-    return rle_to_granges(midpoint, chromosome, filename, tilewidth)
+    ct = give_tiles_counts(midpoint, tiles, chromosome, filename, tilewidth)
+
+    return ct

@@ -18,6 +18,20 @@ from rpy2.robjects import r
 from triform.matrix.find_read_midpoints import find_read_midpoints
 
 
+def _give_sequences_same_length(seqs):
+
+    max_pos = r["Reduce"](
+        r("function(x, y) {max(seqlengths(x), seqlengths(y))}"), seqs)
+
+    add_seqlength = r("function(x, l) { seqlengths(x) <- c(l); x}")
+
+    new_maxlengths = []
+    for seq in seqs:
+        new_maxlengths.append(add_seqlength(seq, max_pos))
+
+    return new_maxlengths
+
+
 def run_triform(args):
 
     logging.info("Preprocessing bed files.")
@@ -34,21 +48,59 @@ def run_triform(args):
         # assert set(treatment_matrixes) == set(control_matrixes), "Chromosomes in ChIP and input differ"
 
         # for chromosome in set(treatment_matrixes).intersection(control_matrixes):
-        chromosome = "chrY"
-        all_granges = iter(
-            treatment_matrixes[chromosome])  # + control_matrixes[chromosome])
-        name, u = next(all_granges)
+        chromo = list(treatment_matrixes.keys())[0]
+        fnames = [f for f, _ in treatment_matrixes[chromo]]
+        print("len fnames", len(fnames))
+        seqs = [s for _, s in treatment_matrixes[chromo]]
 
-        for (fname, gr) in all_granges:
-            _merge = r("""function(u, gr){{
+        if len(seqs) > 1:
+            seqs = _give_sequences_same_length(seqs)
 
-             elementMetadata(u[overlapsAny(u, gr1)])${}= = elementMetadata(gr1)[,1]
+        print(seqs[0])
+        u = r["unique"](r["c"](*[r["granges"](s) for s in seqs]))
+        print("first u", u)
 
-             }}""".format(basename(fname)))
+        _add_element_metadata1 = r("""function(gr, u, name) {
+        mcols(u)[match(gr, u), "name1"] = elementMetadata(gr)
+        u
+        }""")
 
-            u = _merge(u, gr)
+        _add_element_metadata2 = r("""function(gr, u, name) {
+        mcols(u)[match(gr, u), "name2"] = elementMetadata(gr)
+        u
+        }""")
 
+        print(seqs[0])
+        u = _add_element_metadata1(seqs[0], u, "w")
+        print(u, "u1")
+        u = _add_element_metadata2(seqs[1], u, "w")
         print(u)
+
+        # for name, seq in zip(fnames, seqs):
+        #     print(name)
+        #     print(seq)
+        #     u = _add_element_metadata(seq, u, name)
+        #     r["print"](u)
+        #     print(u)
+        # print(u)
+
+        raise
+        # for (fname, gr) in all_granges:
+
+        #     command = """function(u, gr){{
+
+        #      elementMetadata(u[overlapsAny(u, gr)])${} = elementMetadata(gr)[,1]
+
+        #      gr
+
+        #      }}""".format(basename(fname))
+        #     print(command)
+
+        #     _merge = r(command)
+
+        #     u = _merge(u, gr)
+
+        # print(u)
 
         # need for loop to insert names of files (instead of gr1, gr2)
         # elementMetadata(u[overlapsAny(u, gr1)])$gr1 = elementMetadata(gr1)[,1]
