@@ -36,6 +36,10 @@ def _find_read_midpoints(data, chromosome, filename, tilewidth=10):
        width=runLength(runlengths)),
         runlengths = runValue(runlengths))
 
+    gr2 = GRanges(chromosome, IRanges(max(start(runlengths) + tilewidth * 2),
+          width=tilewidth), runlengths=1)
+    # adding gr2 since cut.last.tile.in.chrom must be true
+    gr = c(gr, gr2)
     gr = gr[elementMetadata(gr)[,1] != 0]
     seqlengths(gr) = suppressWarnings(max(end(gr)))
     tg = tileGenome(seqinfo(gr), tilewidth=tilewidth, cut.last.tile.in.chrom=TRUE)

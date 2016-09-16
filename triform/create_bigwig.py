@@ -30,7 +30,7 @@ def create_bigwig(chip, fdr_table, args):
         dfs.append(df)
 
     df = pd.concat(dfs, axis=0)
-    df.to_csv(args.bedgraph, sep=" ", index=False, header=False)
+    df.to_csv(args.bedgraph, sep="\t", index=False, header=False)
     return df
 
 

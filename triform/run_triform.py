@@ -13,23 +13,7 @@ from triform.make_treatment_control_same_length import (
 from triform.exclude_redundant_peaks import exclude_redundant_peaks
 from triform.create_bigwig import create_bigwig
 
-from rpy2.robjects import r
-
-from triform.matrix.find_read_midpoints import find_read_midpoints
-
-
-def _give_sequences_same_length(seqs):
-
-    max_pos = r["Reduce"](
-        r("function(x, y) {max(seqlengths(x), seqlengths(y))}"), seqs)
-
-    add_seqlength = r("function(x, l) { seqlengths(x) <- c(l); x}")
-
-    new_maxlengths = []
-    for seq in seqs:
-        new_maxlengths.append(add_seqlength(seq, max_pos))
-
-    return new_maxlengths
+from triform.matrix.create_matrix import create_matrix
 
 
 def run_triform(args):
@@ -37,84 +21,6 @@ def run_triform(args):
     logging.info("Preprocessing bed files.")
     (treatment, control, treatment_sizes, control_sizes, treatment_iranges,
      control_iranges) = preprocess(args)
-
-    if args.matrix:
-        logging.info("Creating treatment matrix.")
-        treatment_matrixes = find_read_midpoints(treatment_iranges, args)
-        # logging.info("Creating control matrix.")
-        # control_matrixes = find_read_midpoints(control_iranges, args)
-        logging.info("Merging matrixes")
-
-        # assert set(treatment_matrixes) == set(control_matrixes), "Chromosomes in ChIP and input differ"
-
-        # for chromosome in set(treatment_matrixes).intersection(control_matrixes):
-        chromo = list(treatment_matrixes.keys())[0]
-        fnames = [f for f, _ in treatment_matrixes[chromo]]
-        print("len fnames", len(fnames))
-        seqs = [s for _, s in treatment_matrixes[chromo]]
-
-        if len(seqs) > 1:
-            seqs = _give_sequences_same_length(seqs)
-
-        print(seqs[0])
-        u = r["unique"](r["c"](*[r["granges"](s) for s in seqs]))
-        print("first u", u)
-
-        _add_element_metadata1 = r("""function(gr, u, name) {
-        mcols(u)[match(gr, u), "name1"] = elementMetadata(gr)
-        u
-        }""")
-
-        _add_element_metadata2 = r("""function(gr, u, name) {
-        mcols(u)[match(gr, u), "name2"] = elementMetadata(gr)
-        u
-        }""")
-
-        print(seqs[0])
-        u = _add_element_metadata1(seqs[0], u, "w")
-        print(u, "u1")
-        u = _add_element_metadata2(seqs[1], u, "w")
-        print(u)
-
-        # for name, seq in zip(fnames, seqs):
-        #     print(name)
-        #     print(seq)
-        #     u = _add_element_metadata(seq, u, name)
-        #     r["print"](u)
-        #     print(u)
-        # print(u)
-
-        raise
-        # for (fname, gr) in all_granges:
-
-        #     command = """function(u, gr){{
-
-        #      elementMetadata(u[overlapsAny(u, gr)])${} = elementMetadata(gr)[,1]
-
-        #      gr
-
-        #      }}""".format(basename(fname))
-        #     print(command)
-
-        #     _merge = r(command)
-
-        #     u = _merge(u, gr)
-
-        # print(u)
-
-        # need for loop to insert names of files (instead of gr1, gr2)
-        # elementMetadata(u[overlapsAny(u, gr1)])$gr1 = elementMetadata(gr1)[,1]
-
-        # elementMetadata(u[overlapsAny(u, gr2)])$gr2 = elementMetadata(gr2)[,1]
-
-        # GRanges object with 4 ranges and 2 metadata columns:
-        #       seqnames    ranges strand |       gr1       gr2
-        #          <Rle> <IRanges>  <Rle> | <numeric> <numeric>
-        #   [1]     chr1  [ 1,  9]      * |         6         0
-        #   [2]     chr1  [11, 19]      * |         7         1
-        #   [3]     chr1  [21, 29]      * |         8         0
-        #   [4]     chr1  [31, 39]      * |         0         5
-        # m = _create_matrix(list(treatment_iranges.values())[0]["chrY"], "chrY")
 
     logging.info("Initializing treatment data.")
     init_chip = init_treatment(treatment, args)
@@ -162,20 +68,22 @@ def run_triform(args):
     logging.info("Excluding redundant peaks.")
     peak_info = exclude_redundant_peaks(peaks, args)
 
-    # print(peak_info)
     logging.info("Computing FDR.")
     fdr_table = compute_fdr(peak_info)
-    # print(fdr_table)
 
-    fdr_table.to_csv(stdout, sep=" ")
+    if fdr_table.empty:
+        print("No peaks found.")
+    else:
+        fdr_table.to_csv(stdout, sep=" ")
+
+    logging.info("Done.")
+
+    if args.matrix:
+        matrix = create_matrix(treatment_iranges, control_iranges, args)
 
     if args.bedgraph:
         logging.info("Writing bedgraph to file " + args.bedgraph + ".")
         create_bigwig(init_chip, fdr_table, args)
-
-    logging.info("Done.")
-
-    # if args.matrix:
 
 
 def run_triform_no_control(args):

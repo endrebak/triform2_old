@@ -1,3 +1,4 @@
+import pandas as pd
 from rpy2.robjects import r, pandas2ri
 ri2py = pandas2ri.ri2py
 
@@ -5,6 +6,8 @@ ri2py = pandas2ri.ri2py
 def compute_fdr(dfs):
 
     df = r["do.call"]("rbind", dfs)
+    if r["is.null"](df):
+        return pd.DataFrame()
 
     _compute_fdr = r("""function(INFO) {
     INFO <- INFO[order(-INFO$NLP),]
