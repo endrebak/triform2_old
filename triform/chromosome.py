@@ -204,8 +204,8 @@ def chromosome(chip_data, input_data, chip_sizes, input_sizes, args):
     input_data = transform_input_data(input_data)
     input_sizes = transform_input_sizes(input_sizes)
 
-    assert len(chip_data) == len(input_data) == len(chip_sizes) == len(
-        input_sizes), "chip_data, input_data, chip_sizes, and input_sizes do not all have the same length!"
+    # assert len(chip_data) == len(input_data) == len(chip_sizes) == len(
+    #     input_sizes), "chip_data, input_data, chip_sizes, and input_sizes do not all have the same length!"
 
     keys = list(product(chip_data, ["forward", "reverse"]))
 

@@ -1,3 +1,4 @@
+import logging
 from rpy2.robjects import r
 
 from rpy2.robjects.packages import importr
@@ -12,6 +13,11 @@ def make_treatment_control_same_length(treatment, control):
     treatment_result_dict = dict()
     control_result_dict = dict()
     for chromosome in treatment:
+
+        if chromosome not in control:
+            logging.info("Chromosome " + chromosome +
+                         " missing from input data. Skipping.")
+            continue
 
         chr_treatment, chr_control = treatment[chromosome], control[chromosome]
 

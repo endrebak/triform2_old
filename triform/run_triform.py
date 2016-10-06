@@ -1,6 +1,7 @@
 import logging
 from sys import stdout
-from os.path import basename
+from os.path import basename, dirname
+from subprocess import call
 
 from triform.helper_functions import subset_RS4
 from triform.chromosome import chromosome
@@ -14,6 +15,7 @@ from triform.exclude_redundant_peaks import exclude_redundant_peaks
 from triform.create_bigwig import create_bigwig
 
 from triform.matrix.create_matrix import create_matrix
+from triform.create_bed import create_bed
 
 
 def run_triform(args):
@@ -21,6 +23,18 @@ def run_triform(args):
     logging.info("Preprocessing bed files.")
     (treatment, control, treatment_sizes, control_sizes, treatment_iranges,
      control_iranges) = preprocess(args)
+
+    # for bed_file, d in treatment_iranges.items():
+    #     print(bed_file, "bed_file")
+    #     print(d)
+    #     print(type(d))
+    #     for chromosome in d:
+    #         print(chromosome, "chromosome")
+    #         print(d[chromosome])
+
+    #         from rpy2.robjects import r, pandas2ri
+    #         r["write.table"](d[chromosome], "iranges.bed", sep=" ")
+    # raise
 
     logging.info("Initializing treatment data.")
     init_chip = init_treatment(treatment, args)
@@ -74,16 +88,27 @@ def run_triform(args):
     if fdr_table.empty:
         print("No peaks found.")
     else:
-        fdr_table.to_csv(stdout, sep=" ")
+        fdr_table.to_csv(args.outfile, sep=" ")
 
     logging.info("Done.")
 
-    if args.matrix:
-        matrix = create_matrix(treatment_iranges, control_iranges, args)
+    if args.bed:
+        logging.info("Creating bed file: " + args.bed)
+        outdir = dirname(args.bed)
+        if outdir:
+            call("mkdir -p {}".format(outdir), shell=True)
+        bed_df = create_bed(treatment_iranges, control_iranges, fdr_table, args)
+        bed_df.reset_index().to_csv(args.bed, sep="\t", header=False, index=False)
 
-    if args.bedgraph:
-        logging.info("Writing bedgraph to file " + args.bedgraph + ".")
-        create_bigwig(init_chip, fdr_table, args)
+
+    if args.bigwig:
+        call("mkdir -p {}".format(args.bigwig), shell=True)
+        create_bigwig(treatment_iranges, args.bigwig, args)
+        create_bigwig(control_iranges, args.bigwig, args)
+
+    if args.matrix:
+        matrix = create_matrix(treatment_iranges, control_iranges, fdr_table,
+                               args)
 
 
 def run_triform_no_control(args):
@@ -95,7 +120,7 @@ def run_triform_no_control(args):
     init_chip = init_treatment(treatment, args)
 
     logging.info("Computing region statistics.")
-    results = chromosome(init_chip, None, treatment_sizes, None, args)
+    results = bed_file(init_chip, None, treatment_sizes, None, args)
 
     logging.info("Finding enriched peaks.")
     peaks = find_peaks(results, args)

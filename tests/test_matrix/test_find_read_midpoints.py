@@ -37,6 +37,14 @@ def input_data():
 
     return df_to_iranges_end(ir_df)
 
+# @pytest.fixture
+# def enriched_bins():
+#     return pd.read_table(
+#         StringIO("""CHROMOSOME     START       END   ENRICHED
+# chrY  10519611 10519620 1"""),
+#         sep="\s+",
+#         index_col=[0, 1, 2])
+
 
 @pytest.mark.current
 def test_create_matrix(input_data, expected_result):
@@ -50,6 +58,4 @@ def test_create_matrix(input_data, expected_result):
     print(r["head"](expected_result))
 
     print(r["all.equal"](granges, expected_result))
-    # print(r["identical"](granges, expected_result))
-    # assert r["all.equal"](granges, expected_result)
     assert r["all.equal"](granges, expected_result)[0]

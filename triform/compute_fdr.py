@@ -5,8 +5,15 @@ ri2py = pandas2ri.ri2py
 
 def compute_fdr(dfs):
 
-    df = r["do.call"]("rbind", dfs)
-    if r["is.null"](df):
+    new_dfs = []
+    for i, df in enumerate(dfs):
+        if df is None:
+            continue
+
+        new_dfs.append(df)
+
+    df = r["do.call"]("rbind", new_dfs)
+    if r["is.null"](df)[0]:
         return pd.DataFrame()
 
     _compute_fdr = r("""function(INFO) {
@@ -32,5 +39,12 @@ def compute_fdr(dfs):
     }""")
 
     df = ri2py(_compute_fdr(df))
+    idx = df.index.get_level_values(0).to_series().astype(str).str.split(
+        ":",
+        expand=True).ix[:, 0].to_frame()
+
+    df = idx.join(df).reset_index(drop=True)
+    df.columns = ["CHROMOSOME"] + list(df.columns)[1:]
+    df = df.set_index("CHROMOSOME START END".split())
 
     return df.sort_values(["QVAL", "FORM"])

@@ -34,7 +34,8 @@ def expected_result_treatment(chromosome_cover_results_chip):
 
 @pytest.mark.unit
 def test_preprocess(args, expected_result_treatment, expected_result_control):
-    treatment, control, treatment_sizes, control_sizes = preprocess(args)
+    treatment, control, treatment_sizes, control_sizes, _, _ = preprocess(
+        args)  # last two iranges
 
     t = treatment["chrY"]
     for k, l in t.items():
