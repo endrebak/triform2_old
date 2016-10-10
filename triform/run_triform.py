@@ -90,6 +90,8 @@ def run_triform(args):
     else:
         fdr_table.to_csv(args.outfile, sep=" ")
 
+    fdr_table.to_csv("triform.csv", sep=" ")
+
     logging.info("Done.")
 
     if args.bed:

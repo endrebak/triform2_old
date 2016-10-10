@@ -38,7 +38,7 @@ def input_data():
     return results
 
 
-@pytest.mark.current
+@pytest.mark.unit
 def test_exclude_redundant_peaks(input_data, expected_result, args):
 
     print(input_data, "input_data")
@@ -93,3 +93,44 @@ def test_exclude_redundant_peaks_missing3(input_data_missing3,
     print("expected_result")
     print(expected_result_missing3)
     assert np.allclose(expected_result_missing3, ri2py(result))
+
+
+@pytest.fixture
+def expected_result_real_error():
+    s = StringIO(
+        u"""NLP  MAX.NLP      LOC WIDTH    START      END CVG  SURL SURR FORM
+chrY:56845739-56845895:1" 4.03902854326486 4.03902854326486 56845812 157 56845739 56845895 7 0 0 1""")
+    df = pd.read_table(s, sep="\s+", header=0)
+
+    return df
+
+
+@pytest.fixture
+def input_data_only_real_error():
+
+    results = defaultdict(dict)
+    for peak_type in range(1, 4):
+
+        info = r["read.table"]("tests/test_data/real_errors/%s_chrY_pre_exclude_peaks.csv" %
+                               peak_type,
+                               sep=" ",
+                               row_names=1)
+        results["peak_info"][peak_type] = info
+
+    return results
+
+
+@pytest.mark.unit
+def test_exclude_redundant_peaks_real_error(input_data_only_real_error, expected_result_real_error, args):
+
+    # print(input_data_only_real_error, "input_data")
+
+    result = _exclude_redundant_peaks(input_data_only_real_error, args)
+
+    print("result")
+    print(result)
+    # print(result.dtypes)
+    print("expected_result")
+    print(expected_result_real_error)
+    # assert 0
+    assert np.allclose(expected_result_real_error, ri2py(result))

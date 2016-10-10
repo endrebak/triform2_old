@@ -7,6 +7,8 @@ def compute_fdr(dfs):
 
     new_dfs = []
     for i, df in enumerate(dfs):
+
+        r["write.table"](df, str(i) + "_enriched_regions_pre_fdr.csv", sep=" ")
         if df is None:
             continue
 
@@ -15,6 +17,8 @@ def compute_fdr(dfs):
     df = r["do.call"]("rbind", new_dfs)
     if r["is.null"](df)[0]:
         return pd.DataFrame()
+
+    r["write.table"](df, "enriched_regions_pre_fdr.csv", sep=" ")
 
     _compute_fdr = r("""function(INFO) {
     INFO <- INFO[order(-INFO$NLP),]

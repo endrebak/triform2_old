@@ -1,3 +1,3 @@
 source activate py27
 # PYTHONPATH=../. py.test -m "current" --color=yes -svv -f tests/triform/test_merge_peaks.py
-PYTHONPATH=../. py.test -m "current" --color=yes -svv -f tests/triform/test_create_bed.py
+LC_ALL=C PYTHONPATH=../. py.test -m "current" --color=yes -svv -f tests/triform/test_exclude_redundant_peaks.py
