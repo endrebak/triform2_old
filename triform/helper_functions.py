@@ -1,4 +1,4 @@
-from bx.intervals.intersection import IntervalTree
+from quicksect import IntervalTree
 from numpy import int64
 
 from rpy2.robjects import r, pandas2ri
